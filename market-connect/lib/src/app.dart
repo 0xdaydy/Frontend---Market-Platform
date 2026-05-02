@@ -1,4 +1,5 @@
 import 'package:market_connect/src/imports/core_imports.dart';
+import 'shared/wrappers/auth_listener_wrapper.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -13,16 +14,34 @@ class App extends StatelessWidget {
     return MaterialApp.router(
       title: 'Market Connect',
       debugShowCheckedModeBanner: false,
-      theme: buildLightTheme(primaryColorHex: '#00695C'),
-      darkTheme: buildDarkTheme(primaryColorHex: '#00695C'),
-      themeMode: ThemeMode.system,
+      theme: buildLightTheme(),
+      darkTheme: buildDarkTheme(),
+      themeMode: ThemeMode.light,
       routerConfig: appRouter,
-      localizationsDelegates: context.localizationDelegates,
-      supportedLocales: context.supportedLocales,
-      locale: context.locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('fr'),
+        Locale('en'),
+        Locale('ar'),
+      ],
+      localeResolutionCallback: (locale, supportedLocales) {
+        if (locale == null) return const Locale('fr');
+        for (final supported in supportedLocales) {
+          if (supported.languageCode == locale.languageCode) {
+            return supported;
+          }
+        }
+        return const Locale('fr');
+      },
       builder: (context, child) {
         Widget current = child!;
         current = SkeletonWrapper(child: current);
+        current = AuthListenerWrapper(child: current);
         current = SessionListenerWrapper(child: current);
         return current;
       },

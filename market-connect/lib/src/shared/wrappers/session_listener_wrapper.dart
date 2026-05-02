@@ -16,7 +16,7 @@ class SessionListenerWrapper extends ConsumerWidget {
         if (next.status == SessionStatus.authenticated) {
           context.go(AppRoutes.home);
         } else if (next.status == SessionStatus.unauthenticated) {
-          context.go(AppRoutes.onboarding);
+          context.go(AppRoutes.login);
         }
       }
     });

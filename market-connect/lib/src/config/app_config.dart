@@ -2,6 +2,8 @@ import '../imports/core_imports.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import '../core/api/auth_interceptor.dart';
+
 class AppConfig {
   AppConfig._();
   static late final Dio dio;
@@ -21,6 +23,10 @@ class AppConfig {
       ),
     );
 
+    // Auth interceptor FIRST (so it can attach token before logging)
+    dio.interceptors.add(AuthInterceptor());
+
+    // Logging interceptor
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -44,6 +50,6 @@ class AppConfig {
     return dotenv.maybeGet('API_BASE_URL') ?? 
            dotenv.maybeGet('API_URL') ?? 
            dotenv.maybeGet('BASE_API_URL') ?? 
-           'http://localhost:3306';
+           'http://localhost:8080/api/v1';
   }
 }

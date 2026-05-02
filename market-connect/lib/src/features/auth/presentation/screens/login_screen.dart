@@ -1,7 +1,6 @@
 import 'package:market_connect/src/imports/core_imports.dart';
 import 'package:market_connect/src/imports/packages_imports.dart';
 
-
 import 'package:market_connect/src/features/auth/presentation/providers/auth_provider.dart';
 
 class LoginScreen extends HookConsumerWidget {
@@ -14,20 +13,22 @@ class LoginScreen extends HookConsumerWidget {
     final emailController = useTextEditingController();
     final passwordController = useTextEditingController();
     final obscurePassword = useState(true);
+    final rememberMe = useState(true);
 
-    final isLoading = ref.watch<bool>(authControllerProvider);
+    final authAsync = ref.watch(authControllerProvider);
+    final isLoading = authAsync.isLoading;
 
     final cs = context.theme.colorScheme;
     final tt = context.theme.textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     Future<void> handleLogin() async {
       if (!(formKey.currentState?.validate() ?? false)) {
         return;
       }
 
-      ref.read<AuthController>(authControllerProvider.notifier).login(
-        context: context, 
-        email: emailController.text, 
+      ref.read(authControllerProvider.notifier).login(
+        email: emailController.text,
         password: passwordController.text,
       );
     }
@@ -41,181 +42,173 @@ class LoginScreen extends HookConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(height: AppSpacing.xl.h),
+                // Logo
+                Container(
+                  width: 64.w,
+                  height: 64.w,
+                  decoration: BoxDecoration(
+                    color: cs.primary,
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'M',
+                      style: tt.headlineMedium?.copyWith(
+                        color: cs.onPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: AppSpacing.lg.h),
                 Text(
-                  'auth.log_in'.tr(),
-                  style: tt.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                  l10n.loginTitle,
+                  style: tt.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.02,
+                  ),
                 ),
                 SizedBox(height: AppSpacing.sm.h),
                 Text(
-                  'auth.log_in_subtitle'.tr(),
+                  l10n.loginSubtitle,
                   textAlign: TextAlign.center,
                   style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 ),
                 SizedBox(height: AppSpacing.xxxl.h),
-                // Form Card
+                // Form
                 Form(
                   key: formKey,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      AppTextField(
+                      // Email
+                      Text(
+                        l10n.emailLabel,
+                        style: tt.labelMedium?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.xs.h),
+                      TextFormField(
                         controller: emailController,
                         enabled: !isLoading,
-                        label: 'auth.email'.tr(),
-                        prefixIcon: const Icon(Icons.email_outlined),
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          hintText: l10n.emailHint,
+                          prefixIcon: const Icon(Icons.email_outlined),
+                        ),
                         validator: (v) {
                           if (AppUtils.isBlank(v)) {
-                            return 'auth.email_required'.tr();
+                            return l10n.requiredField;
                           }
                           if (!AppUtils.isValidEmail(v!)) {
-                            return 'auth.email_invalid'.tr();
+                            return l10n.invalidEmail;
                           }
                           return null;
                         },
                       ),
                       SizedBox(height: AppSpacing.md.h),
-                      AppTextField(
+                      // Password
+                      Text(
+                        l10n.passwordLabel,
+                        style: tt.labelMedium?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.xs.h),
+                      TextFormField(
                         controller: passwordController,
                         enabled: !isLoading,
-                        label: 'auth.password'.tr(),
                         obscureText: obscurePassword.value,
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(obscurePassword.value ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => obscurePassword.value = !obscurePassword.value,
+                        decoration: InputDecoration(
+                          hintText: l10n.passwordHint,
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(obscurePassword.value
+                                ? Icons.visibility_off
+                                : Icons.visibility),
+                            onPressed: () =>
+                                obscurePassword.value = !obscurePassword.value,
+                          ),
                         ),
-                         validator: (v) {
+                        validator: (v) {
                           if (AppUtils.isBlank(v)) {
-                            return 'auth.password_required'.tr();
+                            return l10n.requiredField;
                           }
                           if (v!.length < 6) {
-                            return 'auth.password_too_short'.tr();
+                            return l10n.minLength(6);
                           }
                           return null;
                         },
                       ),
                       SizedBox(height: AppSpacing.sm.h),
+                      // Remember me
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
-                            spacing: 5.w,
                             children: [
                               SizedBox(
                                 width: 20.w,
-                                height: 20.h,
+                                height: 20.w,
                                 child: Checkbox(
-                                  value: true,
-                                  onChanged: (value) {},
+                                  value: rememberMe.value,
+                                  onChanged: (value) =>
+                                      rememberMe.value = value ?? true,
                                 ),
                               ),
+                              SizedBox(width: 8.w),
                               Text(
-                                'auth.remember_me'.tr(),
-                                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                                l10n.rememberMe,
+                                style: tt.bodySmall
+                                    ?.copyWith(color: cs.onSurfaceVariant),
                               ),
                             ],
-                          ),
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                            ),
-                            onPressed: () {
-                              context.push(AppRoutes.forgotPassword);
-                            },
-                            child: Text(
-                              'auth.forgot_password'.tr(),
-                              style: tt.bodySmall?.copyWith(
-                                color: cs.onSurfaceVariant,
-                              ),
-                            ),
                           ),
                         ],
                       ),
                       SizedBox(height: AppSpacing.lg.h),
-                      AppButton(
-                        label: 'Sign In',
-                        isLoading: isLoading,
-                        onPressed: isLoading ? null : handleLogin,
-                        width: ButtonSize.large,
-                        isFullWidth: false,
+                      // Sign In button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56.h,
+                        child: FilledButton(
+                          onPressed: isLoading ? null : handleLogin,
+                          child: isLoading
+                              ? SizedBox(
+                                  width: 20.w,
+                                  height: 20.w,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: cs.onPrimary,
+                                  ),
+                                )
+                              : Text(
+                                  l10n.signIn,
+                                  style: tt.labelLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.md.h),
+                      // Forgot password
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            // Not in MVP spec
+                          },
+                          child: Text(
+                            l10n.forgotPassword,
+                            style: tt.bodySmall?.copyWith(
+                              color: cs.primary,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                ),
-                SizedBox(height: AppSpacing.xxxl.h),
-                Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      spacing: 20.w,
-                      children: [
-                        SizedBox(
-                          width: 50.w,
-                          height: 50.w,
-                          child: TextButton(
-                            onPressed: () {},
-                            style: TextButton.styleFrom(
-                              backgroundColor: const Color(0xFFEA4335).withValues(alpha: 0.8),
-                              padding: EdgeInsets.symmetric(horizontal: 10.w),
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: AppBorders.button,
-                              ),
-                            ),
-                            child: SvgPicture.asset(AppAssets.googleIcon),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 50.w,
-                          height: 50.w,
-                          child: TextButton(
-                            onPressed: () {},
-                            style: TextButton.styleFrom(
-                              backgroundColor: const Color(0xFF4285F4),
-                              padding: EdgeInsets.symmetric(horizontal: 10.w),
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: AppBorders.button,
-                              ),
-                            ),
-                            child: SvgPicture.asset(AppAssets.facebookIcon),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 50.w,
-                          height: 50.w,
-                          child: TextButton(
-                            onPressed: () {},
-                            style: TextButton.styleFrom(
-                              backgroundColor: const Color(0xFF000000),
-                              padding: EdgeInsets.symmetric(horizontal: 10.w),
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: AppBorders.button,
-                              ),
-                            ),
-                            child: SvgPicture.asset(AppAssets.appleIcon),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: AppSpacing.xl.h),
-                  ],
-                ),
-                InkWell(
-                  onTap: () {
-                    context.push(AppRoutes.signup);
-                  },
-                  child: RichText(
-                    text: TextSpan(
-                      text: 'auth.dont_have_account'.tr(),
-                      style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-                      children: [
-                        TextSpan(
-                          text: 'auth.sign_up'.tr(),
-                          style: TextStyle(
-                            color: cs.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ],

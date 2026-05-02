@@ -1,89 +1,63 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:market_connect/src/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:market_connect/src/features/auth/domain/repositories/auth_repository.dart';
-import 'package:market_connect/src/imports/core_imports.dart';
-import 'package:market_connect/src/imports/packages_imports.dart';
+import '../../data/repositories/auth_repository_impl.dart';
+import '../../domain/entities/user.dart';
+import '../../domain/repositories/auth_repository.dart';
 
 // Provides the single instance of AuthRepositoryImpl
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl();
 });
 
-final authControllerProvider =
-    StateNotifierProvider<AuthController, bool>((ref) {
-  return AuthController(
-    repository: ref.read(authRepositoryProvider),
+// Auth state provider - streams auth changes
+final authStateProvider = StreamProvider<AppUser?>((ref) {
+  final repo = ref.watch(authRepositoryProvider);
+  return repo.onAuthStateChanged;
+});
+
+// Current user provider
+final currentUserProvider = Provider<AppUser?>((ref) {
+  final authState = ref.watch(authStateProvider);
+  return authState.when(
+    data: (user) => user,
+    loading: () => null,
+    error: (_, __) => null,
   );
 });
 
-class AuthController extends StateNotifier<bool> {
+// Auth controller — pure state machine, no UI dependencies.
+// Navigation and toast side effects are handled by AuthListener widget.
+class AuthController extends StateNotifier<AsyncValue<AppUser?>> {
   final AuthRepository _repository;
 
-  AuthController({
-    required AuthRepository repository,
-  })  : _repository = repository,
-        super(false); // loading state is false
+  AuthController({required AuthRepository repository})
+      : _repository = repository,
+        super(const AsyncValue.data(null));
 
-  void login(
-      {required BuildContext context,
-      required String email,
-      required String password}) async {
-    state = true;
+  Future<void> login({required String email, required String password}) async {
+    state = const AsyncValue.loading();
 
     final result = await _repository.login(email: email, password: password);
 
-    state = false;
     result.fold(
-      (failure) =>
-          showToast(context, message: failure.message, status: 'error'),
-      (user) {
-        if (rootContext?.mounted ?? false) {
-          rootContext!.go(AppRoutes.home);
-        }
-      },
+      (failure) => state = AsyncValue.error(failure, StackTrace.current),
+      (user) => state = AsyncValue.data(user),
     );
   }
 
-  void signUp(
-      {required BuildContext context,
-      required String name,
-      required String email,
-      required String password}) async {
-    state = true;
+  Future<void> logout() async {
+    state = const AsyncValue.loading();
 
-    final result =
-        await _repository.signUp(name: name, email: email, password: password);
+    final result = await _repository.logout();
 
-    state = false;
     result.fold(
-      (failure) =>
-          showToast(context, message: failure.message, status: 'error'),
-      (user) {
-        if (rootContext?.mounted ?? false) {
-          rootContext!.go(AppRoutes.home);
-        }
-      },
-    );
-  }
-
-  void forgotPassword(
-      {required BuildContext context, required String email}) async {
-    state = true;
-
-    final result = await _repository.forgotPassword(email: email);
-
-    state = false;
-    result.fold(
-      (failure) =>
-          showToast(context, message: failure.message, status: 'error'),
-      (success) {
-        showToast(context,
-            message: 'Password reset link sent successfully',
-            status: 'success');
-        if (context.mounted) {
-          context.go(AppRoutes.login);
-        }
-      },
+      (failure) => state = AsyncValue.error(failure, StackTrace.current),
+      (_) => state = const AsyncValue.data(null),
     );
   }
 }
+
+final authControllerProvider =
+    StateNotifierProvider<AuthController, AsyncValue<AppUser?>>((ref) {
+  return AuthController(repository: ref.read(authRepositoryProvider));
+});

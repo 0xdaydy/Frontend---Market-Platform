@@ -1,6 +1,7 @@
 import '../../imports/core_imports.dart';
 
-/// A wrapper to initialize [EasyLocalization] with supported locales.
+/// A wrapper that previously initialized EasyLocalization.
+/// Now localization is handled directly by MaterialApp.
 class LocalizationWrapper extends StatelessWidget {
   final Widget child;
 
@@ -11,15 +12,6 @@ class LocalizationWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return EasyLocalization(
-      supportedLocales: const [
-        Locale('en'),
-        Locale('fr'),
-        Locale('ar'),
-      ],
-      path: 'assets/translations',
-      fallbackLocale: const Locale('en'),
-      child: child,
-    );
+    return child;
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/legacy.dart';
+
 import 'package:market_connect/src/features/auth/domain/entities/user.dart';
 import 'package:market_connect/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:market_connect/src/imports/packages_imports.dart';

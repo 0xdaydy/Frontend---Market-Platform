@@ -7,6 +7,7 @@ export 'package:flutter_animate/flutter_animate.dart' hide ShimmerEffect;
 export 'package:flutter_dotenv/flutter_dotenv.dart';
 export 'package:flutter_hooks/flutter_hooks.dart';
 export 'package:flutter_riverpod/flutter_riverpod.dart';
+export 'package:flutter_riverpod/legacy.dart';
 export 'package:flutter_screenutil/flutter_screenutil.dart';
 export 'package:flutter_secure_storage/flutter_secure_storage.dart';
 export 'package:flutter_svg/flutter_svg.dart';

@@ -10,6 +10,7 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
     required this.onWarning,
     required this.info,
     required this.onInfo,
+    required this.offlineIndicator,
     this.successContainer,
     this.onSuccessContainer,
     this.warningContainer,
@@ -24,6 +25,7 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
   final Color onWarning;
   final Color info;
   final Color onInfo;
+  final Color offlineIndicator;
   final Color? successContainer;
   final Color? onSuccessContainer;
   final Color? warningContainer;
@@ -39,6 +41,7 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
     Color? onWarning,
     Color? info,
     Color? onInfo,
+    Color? offlineIndicator,
     Color? successContainer,
     Color? onSuccessContainer,
     Color? warningContainer,
@@ -53,6 +56,7 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
       onWarning: onWarning ?? this.onWarning,
       info: info ?? this.info,
       onInfo: onInfo ?? this.onInfo,
+      offlineIndicator: offlineIndicator ?? this.offlineIndicator,
       successContainer: successContainer ?? this.successContainer,
       onSuccessContainer: onSuccessContainer ?? this.onSuccessContainer,
       warningContainer: warningContainer ?? this.warningContainer,
@@ -77,6 +81,7 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
       onWarning: Color.lerp(onWarning, other.onWarning, t)!,
       info: Color.lerp(info, other.info, t)!,
       onInfo: Color.lerp(onInfo, other.onInfo, t)!,
+      offlineIndicator: Color.lerp(offlineIndicator, other.offlineIndicator, t)!,
       successContainer: Color.lerp(successContainer, other.successContainer, t),
       onSuccessContainer: Color.lerp(onSuccessContainer, other.onSuccessContainer, t),
       warningContainer: Color.lerp(warningContainer, other.warningContainer, t),
@@ -96,7 +101,7 @@ class AppPalettes {
     onSuccess: Colors.white,
     successContainer: Color(0xFFA5D6A7),
     onSuccessContainer: Color(0xFF1B5E20),
-    warning: Color(0xFFED6C02),
+    warning: Color(0xFFF9A825),
     onWarning: Colors.white,
     warningContainer: Color(0xFFFFCC80),
     onWarningContainer: Color(0xFFE65100),
@@ -104,6 +109,7 @@ class AppPalettes {
     onInfo: Colors.white,
     infoContainer: Color(0xFF81D4FA),
     onInfoContainer: Color(0xFF01579B),
+    offlineIndicator: Color(0xFFE65100),
   );
 
   static const dark = AppColorsExtension(
@@ -111,7 +117,7 @@ class AppPalettes {
     onSuccess: Color(0xFF003300),
     successContainer: Color(0xFF1B5E20),
     onSuccessContainer: Color(0xFFA5D6A7),
-    warning: Color(0xFFFFB74D),
+    warning: Color(0xFFFFD54F),
     onWarning: Color(0xFF5D4037),
     warningContainer: Color(0xFFE65100),
     onWarningContainer: Color(0xFFFFCC80),
@@ -119,6 +125,7 @@ class AppPalettes {
     onInfo: Color(0xFF01579B),
     infoContainer: Color(0xFF0277BD),
     onInfoContainer: Color(0xFFE1F5FE),
+    offlineIndicator: Color(0xFFFF8F00),
   );
 }
 

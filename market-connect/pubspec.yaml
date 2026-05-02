@@ -73,7 +73,9 @@ dependencies:
 
 
   # Localization
-  easy_localization: ^3.0.8
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
 
   flutter_native_splash: ^2.4.7
 
@@ -81,6 +83,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  mocktail: ^1.0.4
 
   # Code Generation
   build_runner: ^2.12.2
@@ -88,11 +91,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
 
   assets:
     # - assets/
     # - assets/images/
     - assets/icons/
-    - assets/translations/
     - .env
 

@@ -11,22 +11,9 @@ abstract class AuthRepository {
     required String password,
   });
 
-  /// Sign up with email, password, and optional name
-  FutureEither<AppUser> signUp({
-    required String name,
-    required String email,
-    required String password,
-  });
-
-  /// Send a password reset email
-  FutureEither<void> forgotPassword({
-    required String email,
-  });
-
   /// Sign out the current user
   FutureEither<void> logout();
   
   /// Check if the user is currently authenticated natively
   FutureEither<AppUser?> checkAuthState();
 }
-

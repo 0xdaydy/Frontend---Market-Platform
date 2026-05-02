@@ -44,43 +44,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  FutureEither<AppUser> signUp({
-    required String name, 
-    required String email, 
-    required String password,
-  }) async {
-    final result = await _authService.signUp(
-      name: name,
-      email: email,
-      password: password,
-    );
-
-    return result.flatMap((userData) {
-      if (userData == null) {
-        return left(const ServerFailure('Sign up failed: User record corrupted'));
-      }
-
-      final data = userData['user'] ?? userData;
-      final user = AppUser(
-        id: data['id'].toString(), 
-        email: data['email'] ?? email, 
-        name: name,
-      );
-      
-      return right(user);
-    });
-  }
-
-  @override
-  FutureEither<void> forgotPassword({required String email}) {
-    return _authService.forgotPassword(email: email);
-  }
-
-  @override
   FutureEither<void> logout() {
     return _authService.logout();
   }
-
+  
   @override
   FutureEither<AppUser?> checkAuthState() async {
     final result = await _authService.getCurrentUser();
