@@ -1,2 +1,2 @@
 # Frontend---Market-Platform
-Flutter Mobile POS form a Market Platform
+Flutter Mobile POS for Farmers Market Platform
