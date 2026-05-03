@@ -23,17 +23,25 @@ class CreateRepaymentNotifier extends AsyncNotifier<RepaymentModel?> {
 
   Future<void> createRepayment(Map<String, dynamic> data) async {
     state = const AsyncValue.loading();
-    final repo = ref.read(repaymentRepositoryProvider);
-    final result = await repo.createRepayment(data);
-    state = result.fold(
-      (failure) => AsyncValue.error(failure, StackTrace.current),
-      (repayment) => AsyncValue.data(repayment),
-    );
-    // Refresh lists
-    ref.invalidate(repaymentsProvider);
-    final farmerId = data['farmer_id'] as int?;
-    if (farmerId != null) {
-      ref.invalidate(farmerDebtsProvider(farmerId));
+    try {
+      final repo = ref.read(repaymentRepositoryProvider);
+      final result = await repo.createRepayment(data);
+      state = result.fold(
+        (failure) => AsyncValue.error(failure, StackTrace.current),
+        (repayment) => AsyncValue.data(repayment),
+      );
+      // Refresh lists
+      ref.invalidate(repaymentsProvider);
+      final farmerId = data['farmer_id'] as int?;
+      if (farmerId != null) {
+        ref.invalidate(farmerDebtsProvider(farmerId));
+      }
+    } catch (e, st) {
+      AppLogger.error('CreateRepaymentNotifier: Unexpected error: $e', [e, st]);
+      state = AsyncValue.error(
+        UnknownFailure(e is String ? e : e.toString(), error: e),
+        st,
+      );
     }
   }
 }

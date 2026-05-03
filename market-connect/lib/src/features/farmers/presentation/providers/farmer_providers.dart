@@ -56,14 +56,22 @@ class CreateFarmerNotifier extends AsyncNotifier<void> {
 
   Future<void> createFarmer(Map<String, dynamic> data) async {
     state = const AsyncValue.loading();
-    final repo = ref.read(farmerRepositoryProvider);
-    final result = await repo.createFarmer(data);
-    state = result.fold(
-      (failure) => AsyncValue.error(failure, StackTrace.current),
-      (_) => const AsyncValue.data(null),
-    );
-    // Refresh farmers list
-    ref.invalidate(farmersProvider);
+    try {
+      final repo = ref.read(farmerRepositoryProvider);
+      final result = await repo.createFarmer(data);
+      state = result.fold(
+        (failure) => AsyncValue.error(failure, StackTrace.current),
+        (_) => const AsyncValue.data(null),
+      );
+      // Refresh farmers list
+      ref.invalidate(farmersProvider);
+    } catch (e, st) {
+      AppLogger.error('CreateFarmerNotifier: Unexpected error: $e', [e, st]);
+      state = AsyncValue.error(
+        UnknownFailure(e is String ? e : e.toString(), error: e),
+        st,
+      );
+    }
   }
 }
 
@@ -78,15 +86,23 @@ final debtsProvider = FutureProvider<List<DebtModel>>((ref) async {
   final isOnline = await network.hasConnection();
 
   if (isOnline) {
-    final farmersResult = await repo.getAll();
-    await farmersResult.fold(
-      (_) async {},
-      (farmers) async {
-        for (final farmer in farmers) {
-          await repo.getFarmerDebts(farmer.id);
-        }
-      },
-    );
+    try {
+      final farmersResult = await repo.getAll();
+      await farmersResult.fold(
+        (failure) async => AppLogger.warning('debtsProvider: Failed to fetch farmers: ${failure.message}'),
+        (farmers) async {
+          for (final farmer in farmers) {
+            final debtsResult = await repo.getFarmerDebts(farmer.id);
+            debtsResult.fold(
+              (f) => AppLogger.warning('debtsProvider: Failed to fetch debts for farmer ${farmer.id}: ${f.message}'),
+              (_) {},
+            );
+          }
+        },
+      );
+    } catch (e, st) {
+      AppLogger.error('debtsProvider: Error refreshing debts: $e', [e, st]);
+    }
   }
 
   return HiveService.instance.getDebts();

@@ -1,6 +1,7 @@
 import '../../../../core/data/models/models.dart';
 import '../../../../imports/packages_imports.dart';
 import '../../../../services/services.dart';
+import '../../../../utils/utils.dart';
 import '../../../farmers/presentation/providers/farmer_providers.dart';
 import '../../../repayments/presentation/providers/repayment_providers.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
@@ -77,13 +78,17 @@ class SyncEngineNotifier extends StateNotifier<AsyncValue<SyncResult>> {
 
       if (strategy == null) {
         lastError = 'No strategy for entity type: ${entry.entityType}';
-        await HiveService.instance.updateQueueEntry(
+        final updateResult = await HiveService.instance.updateQueueEntry(
           entry.copyWith(
             status: 'failed',
             retryCount: entry.retryCount + 1,
             lastError: lastError,
             lastAttemptAt: DateTime.now(),
           ),
+        );
+        updateResult.fold(
+          (f) => AppLogger.warning('SyncEngine: Failed to update queue entry: ${f.message}'),
+          (_) {},
         );
         failed++;
         continue;
@@ -93,11 +98,15 @@ class SyncEngineNotifier extends StateNotifier<AsyncValue<SyncResult>> {
         final success = await strategy.sync(entry.payload);
 
         if (success) {
-          await HiveService.instance.removeFromQueue(entry.id);
+          final removeResult = await HiveService.instance.removeFromQueue(entry.id);
+          removeResult.fold(
+            (f) => AppLogger.warning('SyncEngine: Failed to remove queue entry ${entry.id}: ${f.message}'),
+            (_) {},
+          );
           synced++;
         } else {
           lastError = 'Sync returned failure';
-          await HiveService.instance.updateQueueEntry(
+          final updateResult = await HiveService.instance.updateQueueEntry(
             entry.copyWith(
               status: 'failed',
               retryCount: entry.retryCount + 1,
@@ -105,16 +114,24 @@ class SyncEngineNotifier extends StateNotifier<AsyncValue<SyncResult>> {
               lastAttemptAt: DateTime.now(),
             ),
           );
+          updateResult.fold(
+            (f) => AppLogger.warning('SyncEngine: Failed to update queue entry: ${f.message}'),
+            (_) {},
+          );
           failed++;
         }
       } catch (e) {
-        await HiveService.instance.updateQueueEntry(
+        final updateResult = await HiveService.instance.updateQueueEntry(
           entry.copyWith(
             status: 'failed',
             retryCount: entry.retryCount + 1,
             lastError: e.toString(),
             lastAttemptAt: DateTime.now(),
           ),
+        );
+        updateResult.fold(
+          (f) => AppLogger.warning('SyncEngine: Failed to update queue entry: ${f.message}'),
+          (_) {},
         );
         failed++;
       }

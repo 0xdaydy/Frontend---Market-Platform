@@ -30,7 +30,18 @@ class TransactionRepository extends OfflineFirstRepository<TransactionModel> {
   /// Fetch a single transaction.
   FutureEither<TransactionModel> getTransaction(int id) async {
     if (await network.hasConnection()) {
-      return await _remote.getTransaction(id);
+      final result = await _remote.getTransaction(id);
+      result.fold(
+        (failure) => AppLogger.warning('Failed to fetch transaction $id remotely: ${failure.message}'),
+        (transaction) async {
+          final saveResult = await local.saveTransaction(transaction);
+          saveResult.fold(
+            (f) => AppLogger.warning('Failed to cache transaction $id: ${f.message}'),
+            (_) {},
+          );
+        },
+      );
+      return result;
     }
 
     final all = local.getTransactions();
@@ -43,45 +54,63 @@ class TransactionRepository extends OfflineFirstRepository<TransactionModel> {
   FutureEither<TransactionModel> createTransaction(Map<String, dynamic> data) async {
     if (await network.hasConnection()) {
       final result = await _remote.createTransaction(data);
-      result.fold(
-        (_) {},
-        (transaction) async => await local.saveTransaction(transaction),
+      await result.fold(
+        (failure) async => AppLogger.warning('Remote transaction creation failed: ${failure.message}'),
+        (transaction) async {
+          final saveResult = await local.saveTransaction(transaction);
+          saveResult.fold(
+            (f) => AppLogger.warning('Failed to cache created transaction: ${f.message}'),
+            (_) {},
+          );
+        },
       );
       return result;
     }
 
-    final items = (data['items'] as List<dynamic>)
-        .map((e) => TransactionItemModel(
-              productId: e['product_id'] as int,
-              productName: e['product_name'] as String? ?? '',
-              quantity: e['quantity'] as int,
-              unitPrice: (e['unit_price'] as num).toDouble(),
-              lineTotal: ((e['quantity'] as num) * (e['unit_price'] as num)).toDouble(),
-            ))
-        .toList();
+    try {
+      final items = (data['items'] as List<dynamic>)
+          .map((e) => TransactionItemModel(
+                productId: e['product_id'] as int,
+                productName: e['product_name'] as String? ?? '',
+                quantity: e['quantity'] as int,
+                unitPrice: (e['unit_price'] as num).toDouble(),
+                lineTotal: ((e['quantity'] as num) * (e['unit_price'] as num)).toDouble(),
+              ))
+          .toList();
 
-    final tempTransaction = TransactionModel(
-      id: null,
-      reference: 'LOCAL-${DateTime.now().millisecondsSinceEpoch}',
-      farmerId: data['farmer_id'] as int,
-      farmerName: data['farmer_name'] as String? ?? '',
-      paymentMethod: data['payment_method'] as String,
-      totalAmount: (data['total_amount'] as num?)?.toDouble() ?? 0.0,
-      status: 'pending',
-      items: items,
-      createdAt: DateTime.now(),
-      isSynced: false,
-    );
+      final tempTransaction = TransactionModel(
+        id: null,
+        reference: 'LOCAL-${DateTime.now().millisecondsSinceEpoch}',
+        farmerId: data['farmer_id'] as int,
+        farmerName: data['farmer_name'] as String? ?? '',
+        paymentMethod: data['payment_method'] as String,
+        totalAmount: (data['total_amount'] as num?)?.toDouble() ?? 0.0,
+        status: 'pending',
+        items: items,
+        createdAt: DateTime.now(),
+        isSynced: false,
+      );
 
-    await local.saveTransaction(tempTransaction);
-    await enqueueSync(
-      operation: 'create',
-      entityType: 'transaction',
-      entityId: tempTransaction.reference ?? 'local-${DateTime.now().millisecondsSinceEpoch}',
-      payload: data,
-    );
-
-    return right(tempTransaction);
+      final saveResult = await local.saveTransaction(tempTransaction);
+      return saveResult.fold(
+        (failure) => left(failure),
+        (_) async {
+          final queueResult = await enqueueSync(
+            operation: 'create',
+            entityType: 'transaction',
+            entityId: tempTransaction.reference ?? 'local-${DateTime.now().millisecondsSinceEpoch}',
+            payload: data,
+          );
+          return queueResult.fold(
+            (f) => left(f),
+            (_) => right(tempTransaction),
+          );
+        },
+      );
+    } catch (e, st) {
+      AppLogger.error('TransactionRepository: Failed to create offline transaction: $e', [e, st]);
+      return left(ServerFailure('Failed to create offline transaction: $e', error: e));
+    }
   }
 
   /// Validate an offline transaction against the server.

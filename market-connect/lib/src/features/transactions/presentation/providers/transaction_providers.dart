@@ -30,28 +30,44 @@ class CreateTransactionNotifier extends AsyncNotifier<TransactionModel?> {
 
   Future<void> createTransaction(Map<String, dynamic> data) async {
     state = const AsyncValue.loading();
-    final repo = ref.read(transactionRepositoryProvider);
-    final result = await repo.createTransaction(data);
-    state = result.fold(
-      (failure) => AsyncValue.error(failure, StackTrace.current),
-      (transaction) => AsyncValue.data(transaction),
-    );
-    // Refresh lists
-    ref.invalidate(transactionsProvider);
-    final farmerId = data['farmer_id'] as int?;
-    if (farmerId != null) {
-      ref.invalidate(farmerTransactionsProvider(farmerId));
+    try {
+      final repo = ref.read(transactionRepositoryProvider);
+      final result = await repo.createTransaction(data);
+      state = result.fold(
+        (failure) => AsyncValue.error(failure, StackTrace.current),
+        (transaction) => AsyncValue.data(transaction),
+      );
+      // Refresh lists
+      ref.invalidate(transactionsProvider);
+      final farmerId = data['farmer_id'] as int?;
+      if (farmerId != null) {
+        ref.invalidate(farmerTransactionsProvider(farmerId));
+      }
+    } catch (e, st) {
+      AppLogger.error('CreateTransactionNotifier: Unexpected error: $e', [e, st]);
+      state = AsyncValue.error(
+        UnknownFailure(e is String ? e : e.toString(), error: e),
+        st,
+      );
     }
   }
 
   Future<void> validateTransaction(Map<String, dynamic> data) async {
     state = const AsyncValue.loading();
-    final repo = ref.read(transactionRepositoryProvider);
-    final result = await repo.validateTransaction(data);
-    state = result.fold(
-      (failure) => AsyncValue.error(failure, StackTrace.current),
-      (_) => const AsyncValue.data(null),
-    );
+    try {
+      final repo = ref.read(transactionRepositoryProvider);
+      final result = await repo.validateTransaction(data);
+      state = result.fold(
+        (failure) => AsyncValue.error(failure, StackTrace.current),
+        (_) => const AsyncValue.data(null),
+      );
+    } catch (e, st) {
+      AppLogger.error('CreateTransactionNotifier: Unexpected error validating: $e', [e, st]);
+      state = AsyncValue.error(
+        UnknownFailure(e is String ? e : e.toString(), error: e),
+        st,
+      );
+    }
   }
 }
 

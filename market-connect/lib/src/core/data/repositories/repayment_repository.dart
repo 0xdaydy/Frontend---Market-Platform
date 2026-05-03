@@ -32,36 +32,54 @@ class RepaymentRepository extends OfflineFirstRepository<RepaymentModel> {
   FutureEither<RepaymentModel> createRepayment(Map<String, dynamic> data) async {
     if (await network.hasConnection()) {
       final result = await _remote.createRepayment(data);
-      result.fold(
-        (_) {},
-        (repayment) async => await local.saveRepayments([repayment]),
+      await result.fold(
+        (failure) async => AppLogger.warning('Remote repayment creation failed: ${failure.message}'),
+        (repayment) async {
+          final saveResult = await local.saveRepayments([repayment]);
+          saveResult.fold(
+            (f) => AppLogger.warning('Failed to cache created repayment: ${f.message}'),
+            (_) {},
+          );
+        },
       );
       return result;
     }
 
-    final tempRepayment = RepaymentModel(
-      id: DateTime.now().millisecondsSinceEpoch,
-      farmerId: data['farmer_id'] as int,
-      farmerName: data['farmer_name'] as String? ?? '',
-      amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
-      paymentMethod: data['payment_method'] as String,
-      reference: 'LOCAL-${DateTime.now().millisecondsSinceEpoch}',
-      createdAt: DateTime.now(),
-      commodityName: data['commodity_name'] as String?,
-      commodityRate: (data['commodity_rate'] as num?)?.toDouble(),
-      commodityKg: (data['commodity_kg'] as num?)?.toDouble(),
-      isSynced: false,
-    );
+    try {
+      final tempRepayment = RepaymentModel(
+        id: DateTime.now().millisecondsSinceEpoch,
+        farmerId: data['farmer_id'] as int,
+        farmerName: data['farmer_name'] as String? ?? '',
+        amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
+        paymentMethod: data['payment_method'] as String,
+        reference: 'LOCAL-${DateTime.now().millisecondsSinceEpoch}',
+        createdAt: DateTime.now(),
+        commodityName: data['commodity_name'] as String?,
+        commodityRate: (data['commodity_rate'] as num?)?.toDouble(),
+        commodityKg: (data['commodity_kg'] as num?)?.toDouble(),
+        isSynced: false,
+      );
 
-    await local.saveRepayments([tempRepayment]);
-    await enqueueSync(
-      operation: 'create',
-      entityType: 'repayment',
-      entityId: tempRepayment.id.toString(),
-      payload: data,
-    );
-
-    return right(tempRepayment);
+      final saveResult = await local.saveRepayments([tempRepayment]);
+      return saveResult.fold(
+        (failure) => left(failure),
+        (_) async {
+          final queueResult = await enqueueSync(
+            operation: 'create',
+            entityType: 'repayment',
+            entityId: tempRepayment.id.toString(),
+            payload: data,
+          );
+          return queueResult.fold(
+            (f) => left(f),
+            (_) => right(tempRepayment),
+          );
+        },
+      );
+    } catch (e, st) {
+      AppLogger.error('RepaymentRepository: Failed to create offline repayment: $e', [e, st]);
+      return left(ServerFailure('Failed to create offline repayment: $e', error: e));
+    }
   }
 
   List<RepaymentModel> getUnsyncedRepayments() {

@@ -30,14 +30,17 @@ class AuthService {
         'email': email,
         'password': password,
       });
-      final data = response.data as Map<String, dynamic>;
-      
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw const ServerFailure('Invalid login response format');
+      }
+
       // Extract and store JWT token
       final token = data['token'] ?? data['access_token'];
       if (token != null) {
         await AuthInterceptor.setToken(token.toString());
       }
-      
+
       _authStateController.add(data);
       return data;
     }, requiresNetwork: true);
@@ -55,14 +58,17 @@ class AuthService {
         'email': email,
         'password': password,
       });
-      final data = response.data as Map<String, dynamic>;
-      
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw const ServerFailure('Invalid registration response format');
+      }
+
       // Extract and store JWT token
       final token = data['token'] ?? data['access_token'];
       if (token != null) {
         await AuthInterceptor.setToken(token.toString());
       }
-      
+
       _authStateController.add(data);
       return data;
     }, requiresNetwork: true);
@@ -91,7 +97,11 @@ class AuthService {
   FutureEither<Map<String, dynamic>?> getCurrentUser() async {
     return runTask(() async {
       final response = await _dio.get<Map<String, dynamic>>('/auth/me');
-      return response.data as Map<String, dynamic>;
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw const ServerFailure('Invalid user data format');
+      }
+      return data;
     });
   }
 

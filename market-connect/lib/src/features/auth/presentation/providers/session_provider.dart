@@ -1,8 +1,8 @@
 import 'dart:async';
 
-
 import 'package:market_connect/src/features/auth/domain/entities/user.dart';
 import 'package:market_connect/src/features/auth/domain/repositories/auth_repository.dart';
+import 'package:market_connect/src/imports/core_imports.dart';
 import 'package:market_connect/src/imports/packages_imports.dart';
 
 import 'auth_provider.dart';
@@ -48,32 +48,59 @@ class SessionNotifier extends StateNotifier<SessionState> {
   }
 
   Future<void> _init() async {
-    // Check persisted session first
-    final result = await _repository.checkAuthState();
-    result.fold(
-      (_) => state = const SessionState(status: SessionStatus.unauthenticated),
-      (user) {
-        if (user != null) {
-          state = SessionState(status: SessionStatus.authenticated, user: user);
-        } else {
+    try {
+      // Check persisted session first
+      final result = await _repository.checkAuthState();
+      result.fold(
+        (failure) {
+          AppLogger.warning('SessionNotifier: checkAuthState failed: ${failure.message}');
           state = const SessionState(status: SessionStatus.unauthenticated);
-        }
-      },
-    );
+        },
+        (user) {
+          if (user != null) {
+            state = SessionState(status: SessionStatus.authenticated, user: user);
+          } else {
+            state = const SessionState(status: SessionStatus.unauthenticated);
+          }
+        },
+      );
+    } catch (e, st) {
+      AppLogger.error('SessionNotifier: Error during auth state check: $e', [e, st]);
+      state = const SessionState(status: SessionStatus.unauthenticated);
+    }
 
     // Listen for future changes
-    _authSub = _repository.onAuthStateChanged.listen((user) {
-      if (user != null) {
-        state = SessionState(status: SessionStatus.authenticated, user: user);
-      } else {
-        state = const SessionState(status: SessionStatus.unauthenticated);
-      }
-    });
+    try {
+      _authSub = _repository.onAuthStateChanged.listen(
+        (user) {
+          if (user != null) {
+            state = SessionState(status: SessionStatus.authenticated, user: user);
+          } else {
+            state = const SessionState(status: SessionStatus.unauthenticated);
+          }
+        },
+        onError: (Object e, StackTrace st) {
+          AppLogger.error('SessionNotifier: Auth stream error: $e', [e, st]);
+        },
+      );
+    } catch (e, st) {
+      AppLogger.error('SessionNotifier: Failed to subscribe to auth stream: $e', [e, st]);
+    }
   }
 
   Future<void> logout() async {
-    await _repository.logout();
-    state = const SessionState(status: SessionStatus.unauthenticated);
+    try {
+      final result = await _repository.logout();
+      result.fold(
+        (failure) => AppLogger.warning('SessionNotifier: Logout API failed: ${failure.message}'),
+        (_) => AppLogger.info('SessionNotifier: Logout successful'),
+      );
+    } catch (e, st) {
+      AppLogger.error('SessionNotifier: Error during logout: $e', [e, st]);
+    } finally {
+      // Always clear local session state regardless of API result
+      state = const SessionState(status: SessionStatus.unauthenticated);
+    }
   }
 
   @override

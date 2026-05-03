@@ -36,9 +36,15 @@ class CatalogRepository extends OfflineFirstRepository<CategoryModel> {
   FutureEither<List<ProductModel>> getProducts() async {
     if (await network.hasConnection()) {
       final result = await _remote.getProducts();
-      result.fold(
-        (_) {},
-        (products) async => await local.saveProducts(products),
+      await result.fold(
+        (failure) async => AppLogger.warning('Failed to fetch products remotely: ${failure.message}'),
+        (products) async {
+          final saveResult = await local.saveProducts(products);
+          saveResult.fold(
+            (f) => AppLogger.warning('Failed to cache products: ${f.message}'),
+            (_) {},
+          );
+        },
       );
       return result;
     }
@@ -53,9 +59,15 @@ class CatalogRepository extends OfflineFirstRepository<CategoryModel> {
   FutureEither<List<ProductModel>> getProductsByCategory(int categoryId) async {
     if (await network.hasConnection()) {
       final result = await _remote.getProductsByCategory(categoryId);
-      result.fold(
-        (_) {},
-        (products) async => await local.saveProducts(products),
+      await result.fold(
+        (failure) async => AppLogger.warning('Failed to fetch products for category $categoryId: ${failure.message}'),
+        (products) async {
+          final saveResult = await local.saveProducts(products);
+          saveResult.fold(
+            (f) => AppLogger.warning('Failed to cache products for category $categoryId: ${f.message}'),
+            (_) {},
+          );
+        },
       );
       return result;
     }

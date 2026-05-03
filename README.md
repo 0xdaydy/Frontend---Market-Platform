@@ -184,6 +184,26 @@ When the user performs a mutation (create transaction, record repayment) while o
 
 ---
 
+## Backend API Integration (OpenAPI Spec)
+
+The frontend strictly adheres to the backend's OpenAPI 3.1.0 specification (`Backend---Market-Platform/docs/openapi.json`). The connection is implemented in the Data layer and strictly validated by contract tests:
+
+### 1. API Configuration
+The core connection to the backend environment is established using `Dio`. It defines the base path (e.g., `/api/v1`) that prefixes all endpoint calls defined in the spec.
+- **Location:** `lib/src/config/app_config.dart`
+
+### 2. Remote Data Sources
+The frontend implements the API contract through "Remote Data Sources". These classes use the `DioService` to make HTTP requests to the exact endpoints laid out in the OpenAPI spec.
+- **Location:** `lib/src/core/data/remote/`
+- **Examples:** `farmer_remote_data_source.dart`, `transaction_remote_data_source.dart`, `catalog_remote_data_source.dart`
+
+### 3. Contract Tests (The Safety Net)
+The most explicit link to the `openapi.json` spec lives in the tests. The app uses **Contract Tests** to ensure frontend Data Models can perfectly parse the JSON structures defined by the backend spec.
+- **Location:** `test/contract/api_response_snapshot_test.dart`
+- **Mechanism:** Sample JSON responses are derived directly from the OpenAPI spec and pasted here. If the backend spec changes a field name, this test fails immediately.
+
+---
+
 ## State Management (Riverpod)
 
 | Provider Type | Purpose | Example |

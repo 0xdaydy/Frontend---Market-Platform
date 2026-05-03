@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import '../../../../utils/failure.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -37,23 +38,46 @@ class AuthController extends StateNotifier<AsyncValue<AppUser?>> {
   Future<void> login({required String email, required String password}) async {
     state = const AsyncValue.loading();
 
-    final result = await _repository.login(email: email, password: password);
+    try {
+      final result = await _repository.login(
+        email: email,
+        password: password,
+      );
 
-    result.fold(
-      (failure) => state = AsyncValue.error(failure, StackTrace.current),
-      (user) => state = AsyncValue.data(user),
-    );
+      result.fold(
+        (failure) => state = AsyncValue.error(failure, StackTrace.current),
+        (user) => state = AsyncValue.data(user),
+      );
+    } catch (e, st) {
+      state = AsyncValue.error(
+        UnknownFailure(
+          e is String ? e : e.toString(),
+          error: e,
+        ),
+        st,
+      );
+    }
   }
 
   Future<void> logout() async {
     state = const AsyncValue.loading();
 
-    final result = await _repository.logout();
+    try {
+      final result = await _repository.logout();
 
-    result.fold(
-      (failure) => state = AsyncValue.error(failure, StackTrace.current),
-      (_) => state = const AsyncValue.data(null),
-    );
+      result.fold(
+        (failure) => state = AsyncValue.error(failure, StackTrace.current),
+        (_) => state = const AsyncValue.data(null),
+      );
+    } catch (e, st) {
+      state = AsyncValue.error(
+        UnknownFailure(
+          e is String ? e : e.toString(),
+          error: e,
+        ),
+        st,
+      );
+    }
   }
 }
 

@@ -10,36 +10,69 @@ class CatalogRemoteDataSource {
   FutureEither<List<CategoryModel>> getCategories() async {
     final result = await _dio.get('/categories');
     return result.flatMap((response) {
-      final data = response.data as Map<String, dynamic>;
-      final list = (data['data'] ?? data) as List<dynamic>;
-      final categories = list
-          .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-      return right(categories);
+      try {
+        final data = response.data;
+        if (data is! Map<String, dynamic>) {
+          return left(const ServerFailure('Invalid response format: expected object'));
+        }
+        final list = data['data'] ?? data;
+        if (list is! List) {
+          return left(const ServerFailure('Invalid response format: expected list'));
+        }
+        final categories = list
+            .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return right(categories);
+      } catch (e, st) {
+        AppLogger.error('CatalogRemoteDataSource: Failed to parse getCategories: $e', [e, st]);
+        return left(ServerFailure('Failed to parse categories: $e', error: e));
+      }
     });
   }
 
   FutureEither<List<ProductModel>> getProducts() async {
     final result = await _dio.get('/products');
     return result.flatMap((response) {
-      final data = response.data as Map<String, dynamic>;
-      final list = (data['data'] ?? data) as List<dynamic>;
-      final products = list
-          .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-      return right(products);
+      try {
+        final data = response.data;
+        if (data is! Map<String, dynamic>) {
+          return left(const ServerFailure('Invalid response format: expected object'));
+        }
+        final list = data['data'] ?? data;
+        if (list is! List) {
+          return left(const ServerFailure('Invalid response format: expected list'));
+        }
+        final products = list
+            .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return right(products);
+      } catch (e, st) {
+        AppLogger.error('CatalogRemoteDataSource: Failed to parse getProducts: $e', [e, st]);
+        return left(ServerFailure('Failed to parse products: $e', error: e));
+      }
     });
   }
 
   FutureEither<List<ProductModel>> getProductsByCategory(int categoryId) async {
     final result = await _dio.get('/categories/$categoryId/products');
     return result.flatMap((response) {
-      final data = response.data as Map<String, dynamic>;
-      final list = (data['data'] ?? data) as List<dynamic>;
-      final products = list
-          .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-      return right(products);
+      try {
+        final data = response.data;
+        if (data is! Map<String, dynamic>) {
+          return left(const ServerFailure('Invalid response format: expected object'));
+        }
+        final list = data['data'] ?? data;
+        if (list is! List) {
+          return left(const ServerFailure('Invalid response format: expected list'));
+        }
+        final products = list
+            .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return right(products);
+      } catch (e, st) {
+        AppLogger.error('CatalogRemoteDataSource: Failed to parse getProductsByCategory: $e', [e, st]);
+        return left(ServerFailure('Failed to parse products: $e', error: e));
+      }
     });
   }
 }
