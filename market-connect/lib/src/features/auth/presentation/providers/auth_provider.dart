@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import '../../../../utils/error_handler.dart';
 import '../../../../utils/failure.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user.dart';
@@ -51,7 +52,7 @@ class AuthController extends StateNotifier<AsyncValue<AppUser?>> {
     } catch (e, st) {
       state = AsyncValue.error(
         UnknownFailure(
-          e is String ? e : e.toString(),
+          AppErrorHandler.format(e),
           error: e,
         ),
         st,
@@ -72,7 +73,7 @@ class AuthController extends StateNotifier<AsyncValue<AppUser?>> {
     } catch (e, st) {
       state = AsyncValue.error(
         UnknownFailure(
-          e is String ? e : e.toString(),
+          AppErrorHandler.format(e),
           error: e,
         ),
         st,

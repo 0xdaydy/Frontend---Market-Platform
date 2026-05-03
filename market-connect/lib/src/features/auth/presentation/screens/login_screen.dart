@@ -189,7 +189,7 @@ class LoginScreen extends HookConsumerWidget {
                                   style: tt.labelLarge?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: cs.surface,
-                                    fontSize: 20.sp,
+                                    fontSize: 16.sp,
                                   ),
                                 ),
                         ),

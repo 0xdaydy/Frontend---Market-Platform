@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:fpdart/fpdart.dart';
 
 import '../config/app_config.dart';
 import '../core/api/auth_interceptor.dart';
@@ -26,9 +27,10 @@ class AuthService {
   }) async {
     return runTask(() async {
       final response =
-          await _dio.post<Map<String, dynamic>>('/auth/login', data: {
+          await _dio.post<Map<String, dynamic>>('auth/login', data: {
         'email': email,
         'password': password,
+        'device_name': 'mobile',
       });
       final data = response.data;
       if (data is! Map<String, dynamic>) {
@@ -41,32 +43,10 @@ class AuthService {
         await AuthInterceptor.setToken(token.toString());
       }
 
-      _authStateController.add(data);
-      return data;
-    }, requiresNetwork: true);
-  }
-
-  FutureEither<Map<String, dynamic>?> signUp({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    return runTask(() async {
-      final response =
-          await _dio.post<Map<String, dynamic>>('/auth/register', data: {
-        'name': name,
-        'email': email,
-        'password': password,
-      });
-      final data = response.data;
-      if (data is! Map<String, dynamic>) {
-        throw const ServerFailure('Invalid registration response format');
-      }
-
-      // Extract and store JWT token
-      final token = data['token'] ?? data['access_token'];
-      if (token != null) {
-        await AuthInterceptor.setToken(token.toString());
+      // Cache user data for getCurrentUser
+      final userData = data['user'] ?? data;
+      if (userData is Map<String, dynamic>) {
+        await AuthInterceptor.setUserData(userData);
       }
 
       _authStateController.add(data);
@@ -75,33 +55,33 @@ class AuthService {
   }
 
   FutureEither<void> forgotPassword({required String email}) async {
-    return runTask(() async {
-      await _dio.post<void>('/auth/forgot-password', data: {'email': email});
-    }, requiresNetwork: true);
+    // Backend does not support password reset
+    return left(
+      const ServerFailure('Password reset is not supported by this backend.'),
+    );
   }
 
   FutureEither<void> logout() async {
     return runTask(() async {
-      await _dio.post<void>('/auth/logout');
+      await _dio.post<void>('auth/logout');
       await AuthInterceptor.clearToken();
+      await AuthInterceptor.clearUserData();
       _authStateController.add(null);
     }, requiresNetwork: true);
   }
 
   /// Force logout without calling API (e.g. on 401 error)
   void forceLogout() {
-    AuthInterceptor.clearToken();
+    AuthInterceptor.clearToken().ignore();
+    AuthInterceptor.clearUserData().ignore();
     _authStateController.add(null);
   }
 
   FutureEither<Map<String, dynamic>?> getCurrentUser() async {
     return runTask(() async {
-      final response = await _dio.get<Map<String, dynamic>>('/auth/me');
-      final data = response.data;
-      if (data is! Map<String, dynamic>) {
-        throw const ServerFailure('Invalid user data format');
-      }
-      return data;
+      final hasToken = await AuthInterceptor.hasToken();
+      if (!hasToken) return null;
+      return await AuthInterceptor.getUserData();
     });
   }
 

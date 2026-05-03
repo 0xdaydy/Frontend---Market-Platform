@@ -1,0 +1,211 @@
+﻿diff --git a/market-connect/lib/src/features/auth/presentation/providers/auth_provider.dart b/market-connect/lib/src/features/auth/presentation/providers/auth_provider.dart
+index e9e8f78..e838203 100644
+--- a/market-connect/lib/src/features/auth/presentation/providers/auth_provider.dart
++++ b/market-connect/lib/src/features/auth/presentation/providers/auth_provider.dart
+@@ -1,5 +1,6 @@
+ import 'package:flutter_riverpod/flutter_riverpod.dart';
+ import 'package:flutter_riverpod/legacy.dart';
++import '../../../../utils/error_handler.dart';
+ import '../../../../utils/failure.dart';
+ import '../../data/repositories/auth_repository_impl.dart';
+ import '../../domain/entities/user.dart';
+@@ -51,7 +52,7 @@ class AuthController extends StateNotifier<AsyncValue<AppUser?>> {
+     } catch (e, st) {
+       state = AsyncValue.error(
+         UnknownFailure(
+-          e is String ? e : e.toString(),
++          AppErrorHandler.format(e),
+           error: e,
+         ),
+         st,
+@@ -72,7 +73,7 @@ class AuthController extends StateNotifier<AsyncValue<AppUser?>> {
+     } catch (e, st) {
+       state = AsyncValue.error(
+         UnknownFailure(
+-          e is String ? e : e.toString(),
++          AppErrorHandler.format(e),
+           error: e,
+         ),
+         st,
+diff --git a/market-connect/lib/src/features/auth/presentation/screens/login_screen.dart b/market-connect/lib/src/features/auth/presentation/screens/login_screen.dart
+index b7dd5aa..9c557b9 100644
+--- a/market-connect/lib/src/features/auth/presentation/screens/login_screen.dart
++++ b/market-connect/lib/src/features/auth/presentation/screens/login_screen.dart
+@@ -189,7 +189,7 @@ class LoginScreen extends HookConsumerWidget {
+                                   style: tt.labelLarge?.copyWith(
+                                     fontWeight: FontWeight.w600,
+                                     color: cs.surface,
+-                                    fontSize: 20.sp,
++                                    fontSize: 16.sp,
+                                   ),
+                                 ),
+                         ),
+diff --git a/market-connect/lib/src/shared/wrappers/auth_listener_wrapper.dart b/market-connect/lib/src/shared/wrappers/auth_listener_wrapper.dart
+index 8cfa4f9..64065f5 100644
+--- a/market-connect/lib/src/shared/wrappers/auth_listener_wrapper.dart
++++ b/market-connect/lib/src/shared/wrappers/auth_listener_wrapper.dart
+@@ -9,6 +9,10 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
+ /// (navigation on login/logout, error toast).
+ ///
+ /// Keeps AuthController free of UI dependencies.
++///
++/// Uses [GoRouter.go] via [appRouter] instead of [context.go] because this
++/// widget sits above the Router in the widget tree, so [GoRouter.of] would
++/// throw.
+ class AuthListenerWrapper extends ConsumerWidget {
+   final Widget child;
+   const AuthListenerWrapper({super.key, required this.child});
+@@ -16,7 +20,6 @@ class AuthListenerWrapper extends ConsumerWidget {
+   @override
+   Widget build(BuildContext context, WidgetRef ref) {
+     ref.listen<AsyncValue<AppUser?>>(authControllerProvider, (prev, next) {
+-      // Only react to transitions, not initial state
+       if (prev == null) return;
+ 
+       next.whenOrNull(
+@@ -24,11 +27,13 @@ class AuthListenerWrapper extends ConsumerWidget {
+           final wasLoggedIn = prev.hasValue && prev.value != null;
+           final isLoggedIn = user != null;
+           if (isLoggedIn && !wasLoggedIn) {
+-            // Successful login ÔÇö navigate to home
+-            context.go(AppRoutes.home);
++            WidgetsBinding.instance.addPostFrameCallback((_) {
++              appRouter.go(AppRoutes.home);
++            });
+           } else if (!isLoggedIn && wasLoggedIn) {
+-            // Successful logout ÔÇö navigate to login
+-            context.go(AppRoutes.login);
++            WidgetsBinding.instance.addPostFrameCallback((_) {
++              appRouter.go(AppRoutes.login);
++            });
+           }
+         },
+         error: (error, _) {
+diff --git a/market-connect/lib/src/shared/wrappers/session_listener_wrapper.dart b/market-connect/lib/src/shared/wrappers/session_listener_wrapper.dart
+index 4337f39..31cfa81 100644
+--- a/market-connect/lib/src/shared/wrappers/session_listener_wrapper.dart
++++ b/market-connect/lib/src/shared/wrappers/session_listener_wrapper.dart
+@@ -13,15 +13,13 @@ class SessionListenerWrapper extends ConsumerWidget {
+       if (next.status != SessionStatus.unknown) {
+         FlutterNativeSplash.remove();
+         WidgetsBinding.instance.addPostFrameCallback((_) {
+-          if (!context.mounted) return;
+           try {
+             if (next.status == SessionStatus.authenticated) {
+-              context.go(AppRoutes.home);
++              appRouter.go(AppRoutes.home);
+             } else if (next.status == SessionStatus.unauthenticated) {
+-              context.go(AppRoutes.login);
++              appRouter.go(AppRoutes.login);
+             }
+           } catch (e) {
+-            // GoRouter may not be available in test contexts; ignore.
+             AppLogger.warning('SessionListenerWrapper: navigation skipped: $e');
+           }
+         });
+diff --git a/market-connect/lib/src/utils/error_handler.dart b/market-connect/lib/src/utils/error_handler.dart
+index 7bc2eaf..ea5e1d4 100644
+--- a/market-connect/lib/src/utils/error_handler.dart
++++ b/market-connect/lib/src/utils/error_handler.dart
+@@ -1,14 +1,95 @@
++import 'package:dio/dio.dart';
++
++import 'failure.dart';
++
+ class AppErrorHandler {
+   static String format(dynamic error) {
+     if (error is String) return error;
+-    
+-    // Add logic for common exceptions (e.g., DioException if using Dio)
+-    // For now, basic error message extraction
++
++    if (error is DioException) {
++      return _formatDioException(error);
++    }
++
++    if (error is Failure) {
++      return error.message;
++    }
++
+     try {
+-      if (error?.message != null) return error.message;
+-      if (error?.toString() != null) return error.toString();
++      final message = error?.message;
++      if (message is String && message.isNotEmpty) {
++        return _stripStackTrace(message);
++      }
+     } catch (_) {}
+-    
++
++    try {
++      final str = error.toString();
++      if (str.isNotEmpty) return _stripStackTrace(str);
++    } catch (_) {}
++
+     return 'An unexpected error occurred';
+   }
++
++  static String _formatDioException(DioException error) {
++    switch (error.type) {
++      case DioExceptionType.connectionTimeout:
++        return 'Connection timed out. Please try again.';
++      case DioExceptionType.sendTimeout:
++        return 'Request timed out. Please try again.';
++      case DioExceptionType.receiveTimeout:
++        return 'Server is taking too long. Please try again.';
++      case DioExceptionType.badResponse:
++        return _formatBadResponse(error);
++      case DioExceptionType.badCertificate:
++        return 'Certificate verification failed. Please try again.';
++      case DioExceptionType.cancel:
++        return 'Request was cancelled.';
++      case DioExceptionType.connectionError:
++        return 'Unable to connect. Please check your internet connection.';
++      case DioExceptionType.unknown:
++        final msg = error.message;
++        if (msg != null && msg.isNotEmpty) return _stripStackTrace(msg);
++        return 'An unexpected error occurred.';
++    }
++  }
++
++  static String _formatBadResponse(DioException error) {
++    final statusCode = error.response?.statusCode;
++    switch (statusCode) {
++      case 400:
++        return 'Invalid request. Please check your input.';
++      case 401:
++        return 'Invalid email or password.';
++      case 403:
++        return 'Access denied.';
++      case 404:
++        return 'Service not found.';
++      case 429:
++        return 'Too many attempts. Please try again later.';
++      case 500:
++        return 'Server error. Please try again later.';
++      case 502:
++        return 'Server is currently unavailable.';
++      case 503:
++        return 'Service temporarily unavailable.';
++      default:
++        return 'Request failed ($statusCode). Please try again.';
++    }
++  }
++
++  static String _stripStackTrace(String message) {
++    var cleaned = message;
++    cleaned = cleaned.replaceAll(
++      RegExp(r'#\d+\s+\S+.*$', multiLine: true),
++      '',
++    );
++    cleaned = cleaned.replaceAll(
++      RegExp(r'\s*at\s+\S+\s*\([^)]*\)', multiLine: true),
++      '',
++    );
++    cleaned = cleaned.replaceAll(
++      RegExp(r'\n\s*\n', multiLine: true),
++      '\n',
++    );
++    return cleaned.trim();
++  }
+ }

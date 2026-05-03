@@ -8,7 +8,7 @@ class RepaymentRemoteDataSource {
   final DioService _dio = DioService.instance;
 
   FutureEither<List<RepaymentModel>> getRepayments() async {
-    final result = await _dio.get('/repayments');
+    final result = await _dio.get('repayments');
     return result.flatMap((response) {
       try {
         final data = response.data;
@@ -31,7 +31,7 @@ class RepaymentRemoteDataSource {
   }
 
   FutureEither<RepaymentModel> createRepayment(Map<String, dynamic> data) async {
-    final result = await _dio.post('/repayments', data: data);
+    final result = await _dio.post('repayments', data: data);
     return result.flatMap((response) {
       try {
         final responseData = response.data;

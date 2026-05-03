@@ -13,15 +13,13 @@ class SessionListenerWrapper extends ConsumerWidget {
       if (next.status != SessionStatus.unknown) {
         FlutterNativeSplash.remove();
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!context.mounted) return;
           try {
             if (next.status == SessionStatus.authenticated) {
-              context.go(AppRoutes.home);
+              appRouter.go(AppRoutes.home);
             } else if (next.status == SessionStatus.unauthenticated) {
-              context.go(AppRoutes.login);
+              appRouter.go(AppRoutes.login);
             }
           } catch (e) {
-            // GoRouter may not be available in test contexts; ignore.
             AppLogger.warning('SessionListenerWrapper: navigation skipped: $e');
           }
         });

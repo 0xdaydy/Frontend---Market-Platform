@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import '../../services/auth_service.dart';
 import '../../services/secure_storage_service.dart';
@@ -9,6 +11,7 @@ import '../../utils/logger.dart';
 /// can redirect to login on the next request.
 class AuthInterceptor extends Interceptor {
   static const String _tokenKey = 'jwt_token';
+  static const String _userDataKey = 'auth_user';
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
@@ -36,6 +39,8 @@ class AuthInterceptor extends Interceptor {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
             AppLogger.info('AuthInterceptor: Token attached to ${options.path}');
+          } else {
+            AppLogger.warning('AuthInterceptor: No token available for protected route: ${options.path}');
           }
           handler.next(options);
         },
@@ -73,6 +78,47 @@ class AuthInterceptor extends Interceptor {
     );
   }
 
+  /// Store user data after successful login.
+  static Future<void> setUserData(Map<String, dynamic> userData) async {
+    final result = await SecureStorageService.instance.write(
+      _userDataKey,
+      jsonEncode(userData),
+    );
+    result.fold(
+      (failure) => AppLogger.error('AuthInterceptor: Failed to store user data: ${failure.message}'),
+      (_) => AppLogger.info('AuthInterceptor: User data stored'),
+    );
+  }
+
+  /// Retrieve cached user data.
+  static Future<Map<String, dynamic>?> getUserData() async {
+    final result = await SecureStorageService.instance.read(_userDataKey);
+    return result.fold(
+      (failure) {
+        AppLogger.warning('AuthInterceptor: Failed to read user data: ${failure.message}');
+        return null;
+      },
+      (json) {
+        if (json == null || json.isEmpty) return null;
+        try {
+          return jsonDecode(json) as Map<String, dynamic>;
+        } catch (e) {
+          AppLogger.error('AuthInterceptor: Failed to decode user data: $e');
+          return null;
+        }
+      },
+    );
+  }
+
+  /// Clear cached user data on logout.
+  static Future<void> clearUserData() async {
+    final result = await SecureStorageService.instance.delete(_userDataKey);
+    result.fold(
+      (failure) => AppLogger.error('AuthInterceptor: Failed to clear user data: ${failure.message}'),
+      (_) => AppLogger.info('AuthInterceptor: User data cleared'),
+    );
+  }
+
   /// Check if a token exists.
   static Future<bool> hasToken() async {
     final result = await SecureStorageService.instance.read(_tokenKey);
@@ -84,10 +130,10 @@ class AuthInterceptor extends Interceptor {
 
   bool _isPublicEndpoint(String path) {
     final publicPaths = [
-      '/auth/login',
-      '/auth/register',
-      '/auth/forgot-password',
-      '/auth/reset-password',
+      'auth/login',
+      'auth/register',
+      'auth/forgot-password',
+      'auth/reset-password',
     ];
     return publicPaths.any((p) => path.contains(p));
   }

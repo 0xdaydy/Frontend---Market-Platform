@@ -9,6 +9,10 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
 /// (navigation on login/logout, error toast).
 ///
 /// Keeps AuthController free of UI dependencies.
+///
+/// Uses [GoRouter.go] via [appRouter] instead of [context.go] because this
+/// widget sits above the Router in the widget tree, so [GoRouter.of] would
+/// throw.
 class AuthListenerWrapper extends ConsumerWidget {
   final Widget child;
   const AuthListenerWrapper({super.key, required this.child});
@@ -16,7 +20,6 @@ class AuthListenerWrapper extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen<AsyncValue<AppUser?>>(authControllerProvider, (prev, next) {
-      // Only react to transitions, not initial state
       if (prev == null) return;
 
       next.whenOrNull(
@@ -24,11 +27,13 @@ class AuthListenerWrapper extends ConsumerWidget {
           final wasLoggedIn = prev.hasValue && prev.value != null;
           final isLoggedIn = user != null;
           if (isLoggedIn && !wasLoggedIn) {
-            // Successful login — navigate to home
-            context.go(AppRoutes.home);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              appRouter.go(AppRoutes.home);
+            });
           } else if (!isLoggedIn && wasLoggedIn) {
-            // Successful logout — navigate to login
-            context.go(AppRoutes.login);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              appRouter.go(AppRoutes.login);
+            });
           }
         },
         error: (error, _) {

@@ -30,7 +30,8 @@ class AppConfig {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          AppLogger.info('🌐 [DIO] REQUEST[${options.method}] => PATH: ${options.path}');
+          final hasAuth = options.headers.containsKey('Authorization');
+          AppLogger.info('🌐 [DIO] REQUEST[${options.method}] => PATH: ${options.path}${hasAuth ? ' 🔐' : ' 🔓'}');
           return handler.next(options);
         },
         onResponse: (response, handler) {
@@ -38,7 +39,12 @@ class AppConfig {
           return handler.next(response);
         },
         onError: (DioException e, handler) {
-          AppLogger.error('❌ [DIO] ERROR[${e.response?.statusCode}] => PATH: ${e.requestOptions.path}');
+          final code = e.response?.statusCode;
+          final body = e.response?.data;
+          AppLogger.error('❌ [DIO] ERROR[$code] => PATH: ${e.requestOptions.path}');
+          if (body != null) {
+            AppLogger.info('   Response body: $body');
+          }
           return handler.next(e);
         },
       ),

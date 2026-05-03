@@ -88,7 +88,10 @@ class CatalogueScreen extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: SizedBox()),
-                error: (_, __) => const SizedBox(),
+                error: (e, _) {
+                  AppLogger.error('CatalogueScreen: Failed to load categories: $e');
+                  return const SizedBox();
+                },
               ),
             ),
             SizedBox(height: 8.h),
@@ -144,12 +147,19 @@ class CatalogueScreen extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => Center(
-                  child: Text(
-                    l10n.errorLoading,
-                    style: tt.bodyMedium?.copyWith(color: cs.error),
-                  ),
-                ),
+                error: (error, _) {
+                  AppLogger.error('CatalogueScreen: Failed to load products: $error');
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Text(
+                        AppErrorHandler.format(error),
+                        style: tt.bodyMedium?.copyWith(color: cs.error),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             // Cart summary bar

@@ -93,12 +93,19 @@ class ProducteursScreen extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => Center(
-                  child: Text(
-                    l10n.errorLoading,
-                    style: tt.bodyMedium?.copyWith(color: cs.error),
-                  ),
-                ),
+                error: (error, _) {
+                  AppLogger.error('ProducteursScreen: Failed to load farmers: $error');
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Text(
+                        AppErrorHandler.format(error),
+                        style: tt.bodyMedium?.copyWith(color: cs.error),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ],

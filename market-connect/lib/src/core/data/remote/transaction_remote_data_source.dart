@@ -8,7 +8,7 @@ class TransactionRemoteDataSource {
   final DioService _dio = DioService.instance;
 
   FutureEither<List<TransactionModel>> getTransactions() async {
-    final result = await _dio.get('/transactions');
+    final result = await _dio.get('transactions');
     return result.flatMap((response) {
       try {
         final data = response.data;
@@ -31,7 +31,7 @@ class TransactionRemoteDataSource {
   }
 
   FutureEither<TransactionModel> getTransaction(int id) async {
-    final result = await _dio.get('/transactions/$id');
+    final result = await _dio.get('transactions/$id');
     return result.flatMap((response) {
       try {
         final data = response.data;
@@ -48,7 +48,7 @@ class TransactionRemoteDataSource {
   }
 
   FutureEither<TransactionModel> createTransaction(Map<String, dynamic> data) async {
-    final result = await _dio.post('/transactions', data: data);
+    final result = await _dio.post('transactions', data: data);
     return result.flatMap((response) {
       try {
         final responseData = response.data;
@@ -65,7 +65,7 @@ class TransactionRemoteDataSource {
   }
 
   FutureEither<Map<String, dynamic>> validateTransaction(Map<String, dynamic> data) async {
-    final result = await _dio.post('/transactions/validate', data: data);
+    final result = await _dio.post('transactions/validate', data: data);
     return result.flatMap((response) {
       try {
         final responseData = response.data;

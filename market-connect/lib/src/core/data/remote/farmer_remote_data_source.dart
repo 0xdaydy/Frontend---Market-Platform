@@ -8,7 +8,7 @@ class FarmerRemoteDataSource {
   final DioService _dio = DioService.instance;
 
   FutureEither<List<FarmerModel>> getFarmers() async {
-    final result = await _dio.get('/farmers');
+    final result = await _dio.get('farmers');
     return result.flatMap((response) {
       try {
         final data = response.data;
@@ -31,7 +31,7 @@ class FarmerRemoteDataSource {
   }
 
   FutureEither<FarmerModel> getFarmer(int id) async {
-    final result = await _dio.get('/farmers/$id');
+    final result = await _dio.get('farmers/$id');
     return result.flatMap((response) {
       try {
         final data = response.data;
@@ -48,7 +48,7 @@ class FarmerRemoteDataSource {
   }
 
   FutureEither<FarmerModel> createFarmer(Map<String, dynamic> data) async {
-    final result = await _dio.post('/farmers', data: data);
+    final result = await _dio.post('farmers', data: data);
     return result.flatMap((response) {
       try {
         final responseData = response.data;
@@ -65,7 +65,7 @@ class FarmerRemoteDataSource {
   }
 
   FutureEither<List<DebtModel>> getFarmerDebts(int farmerId) async {
-    final result = await _dio.get('/farmers/$farmerId/debts');
+    final result = await _dio.get('farmers/$farmerId/debts');
     return result.flatMap((response) {
       try {
         final data = response.data;
@@ -88,7 +88,7 @@ class FarmerRemoteDataSource {
   }
 
   FutureEither<List<TransactionModel>> getFarmerTransactions(int farmerId) async {
-    final result = await _dio.get('/farmers/$farmerId/transactions');
+    final result = await _dio.get('farmers/$farmerId/transactions');
     return result.flatMap((response) {
       try {
         final data = response.data;

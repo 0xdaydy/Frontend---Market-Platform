@@ -8,7 +8,7 @@ class CatalogRemoteDataSource {
   final DioService _dio = DioService.instance;
 
   FutureEither<List<CategoryModel>> getCategories() async {
-    final result = await _dio.get('/categories');
+    final result = await _dio.get('categories');
     return result.flatMap((response) {
       try {
         final data = response.data;
@@ -31,7 +31,7 @@ class CatalogRemoteDataSource {
   }
 
   FutureEither<List<ProductModel>> getProducts() async {
-    final result = await _dio.get('/products');
+    final result = await _dio.get('products');
     return result.flatMap((response) {
       try {
         final data = response.data;
@@ -54,7 +54,7 @@ class CatalogRemoteDataSource {
   }
 
   FutureEither<List<ProductModel>> getProductsByCategory(int categoryId) async {
-    final result = await _dio.get('/categories/$categoryId/products');
+    final result = await _dio.get('categories/$categoryId/products');
     return result.flatMap((response) {
       try {
         final data = response.data;
