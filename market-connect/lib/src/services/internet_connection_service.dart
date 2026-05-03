@@ -7,4 +7,9 @@ class InternetConnectionService {
 
   Future<bool> hasConnection() async =>
       await internetConnection.hasInternetAccess;
+
+  /// Stream of connectivity status changes.
+  Stream<bool> get onStatusChange => internetConnection.onStatusChange.map(
+        (status) => status == InternetStatus.connected,
+      );
 }

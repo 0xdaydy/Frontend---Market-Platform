@@ -1,14 +1,32 @@
 import 'package:market_connect/src/imports/core_imports.dart';
+import 'package:market_connect/src/imports/packages_imports.dart';
+
+import '../../network/network_provider.dart';
 
 /// Global offline banner that slides in from the top when connectivity is lost.
 ///
 /// Non-dismissible, non-blocking. Content below remains scrollable and tappable.
 /// Height: 48dp. Background: offlineIndicator color.
-class OfflineBanner extends StatelessWidget {
+///
+/// Automatically hides when the device comes back online.
+class OfflineBanner extends ConsumerWidget {
   const OfflineBanner({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final networkAsync = ref.watch(networkStatusProvider);
+
+    return networkAsync.when(
+      data: (isOnline) {
+        if (isOnline) return const SizedBox.shrink();
+        return _buildBanner(context);
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildBanner(BuildContext context) {
     final cs = context.theme.colorScheme;
     final tt = context.theme.textTheme;
     final l10n = AppLocalizations.of(context)!;
