@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../theme/color_schemes.dart';
 import '../theme/theme.dart';
-import '../shared/enums/snack_bar_type.dart';
 
 extension ContextExtension on BuildContext {
   // ── Theme shortcuts ──────────────────────────────────────────────────────
@@ -39,44 +38,6 @@ extension ContextExtension on BuildContext {
   bool get isAndroid => theme.platform == TargetPlatform.android;
 
   // ── Overlays ─────────────────────────────────────────────────────────────
-  void showSnackBar(
-    String message, {
-    SnackBarAction? action,
-    Duration duration = const Duration(seconds: 3),
-  }) {
-    ScaffoldMessenger.of(this)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          action: action,
-          duration: duration,
-        ),
-      );
-  }
-
-  void showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(this)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: appColors.success,
-        ),
-      );
-  }
-
-  void showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(this)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: colors.error,
-        ),
-      );
-  }
-
   Future<T?> showAppBottomSheet<T>({
     required WidgetBuilder builder,
     bool isScrollControlled = true,
@@ -95,33 +56,6 @@ extension ContextExtension on BuildContext {
       context: this,
       builder: builder,
     );
-  }
-
-  /// Shows a snackbar with a colour driven by [SnackBarType].
-  ///
-  /// ```dart
-  /// context.showTypedSnackBar('Saved!', type: SnackBarType.success);
-  /// ```
-  void showTypedSnackBar(
-    String message, {
-    SnackBarType type = SnackBarType.info,
-    Duration duration = const Duration(seconds: 3),
-  }) {
-    final bg = switch (type) {
-      SnackBarType.success => appColors.success,
-      SnackBarType.warning => appColors.warning,
-      SnackBarType.error   => colors.error,
-      SnackBarType.info    => colors.inverseSurface,
-    };
-    ScaffoldMessenger.of(this)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: bg,
-          duration: duration,
-        ),
-      );
   }
 
   // ── Routing shortcuts ────────────────────────────────────────────────────

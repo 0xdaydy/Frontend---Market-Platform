@@ -16,11 +16,6 @@ FutureEither<T> runTask<T>(
 
     if (!hasNetwork) {
       AppLogger.warning('Network unavailable for task');
-      showGlobalToast(
-        message:
-            'No internet connection. Please check your connection and try again.',
-        status: 'warning',
-      );
       return left(
         const NetworkFailure(
           'No internet connection. Please check your connection and try again.',

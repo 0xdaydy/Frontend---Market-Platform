@@ -1,6 +1,7 @@
 import 'package:market_connect/src/imports/core_imports.dart';
 import 'package:market_connect/src/imports/packages_imports.dart';
 
+import '../../core/notifications/notifications.dart';
 import '../../features/auth/domain/entities/user.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 
@@ -32,7 +33,7 @@ class AuthListenerWrapper extends ConsumerWidget {
         },
         error: (error, _) {
           if (error is Failure) {
-            showToast(context, message: error.message, status: 'error');
+            ref.read(notificationGatewayProvider).notify(error);
           }
         },
       );

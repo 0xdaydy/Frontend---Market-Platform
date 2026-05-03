@@ -2,6 +2,7 @@ import 'package:market_connect/src/imports/core_imports.dart';
 import 'package:market_connect/src/imports/packages_imports.dart';
 
 import '../../../../core/data/models/models.dart';
+import '../../../../core/notifications/notifications.dart';
 import '../../../farmers/presentation/providers/farmer_providers.dart';
 import '../../../repayments/presentation/providers/repayment_providers.dart';
 
@@ -46,9 +47,9 @@ class _RecordRepaymentScreenState extends ConsumerState<RecordRepaymentScreen> {
           }
         },
         error: (error, _) {
-          context.showErrorSnackBar(
-            error is Failure ? error.message : l10n.error,
-          );
+          if (error is Failure) {
+            ref.read(notificationGatewayProvider).notify(error);
+          }
         },
       );
     });

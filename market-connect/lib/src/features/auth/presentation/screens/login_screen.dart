@@ -1,7 +1,6 @@
+import 'package:market_connect/src/features/auth/presentation/providers/auth_provider.dart';
 import 'package:market_connect/src/imports/core_imports.dart';
 import 'package:market_connect/src/imports/packages_imports.dart';
-
-import 'package:market_connect/src/features/auth/presentation/providers/auth_provider.dart';
 
 class LoginScreen extends HookConsumerWidget {
   const LoginScreen({super.key});
@@ -28,9 +27,9 @@ class LoginScreen extends HookConsumerWidget {
       }
 
       ref.read(authControllerProvider.notifier).login(
-        email: emailController.text,
-        password: passwordController.text,
-      );
+            email: emailController.text,
+            password: passwordController.text,
+          );
     }
 
     return Scaffold(
@@ -189,6 +188,8 @@ class LoginScreen extends HookConsumerWidget {
                                   l10n.signIn,
                                   style: tt.labelLarge?.copyWith(
                                     fontWeight: FontWeight.w600,
+                                    color: cs.surface,
+                                    fontSize: 20.sp,
                                   ),
                                 ),
                         ),
