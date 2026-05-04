@@ -1,43 +1,43 @@
 name: Deploy Flutter Web to GitHub Pages
 
 on:
+  # Runs on pushes targeting the default branch
   push:
-    branches: [main, master]
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Required permissions for GitHub Pages deployment via GitHub Actions
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: market-connect
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        id: pages
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version-file: market-connect/pubspec.yaml
           cache: true
-
-      # Automatically detects the correct base path for GitHub Pages
-      # (e.g., /repo-name/ for project sites, / for custom domains)
-      - name: Configure GitHub Pages
-        id: pages
-        uses: actions/configure-pages@v5
-
       - name: Inject environment variables
         run: |
           if [ -n "${{ secrets.API_BASE_URL }}" ]; then
@@ -49,34 +49,16 @@ jobs:
           fi
           echo "APP_NAME=\"Market Connect\"" >> .env
           cat .env
-
       - name: Install dependencies
         run: flutter pub get
-
       - name: Build web
         run: flutter build web --release --base-href "${{ steps.pages.outputs.base_path }}"
-
-      # Copies index.html to 404.html so client-side routing works on refresh
       - name: Fix SPA routing for GitHub Pages
         run: cp build/web/index.html build/web/404.html
-
-      - name: Verify build output
-        run: |
-          ls -la build/web/
-          test -f build/web/index.html || (echo "Build failed: index.html missing" && exit 1)
-
-      - name: Upload Pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: market-connect/build/web
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
