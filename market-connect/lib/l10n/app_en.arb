@@ -294,6 +294,8 @@
   "@uncategorized": {},
   "errorLoading": "Loading error",
   "@errorLoading": {},
+  "creditSurplus": "Credit surplus",
+  "@creditSurplus": {},
   "noData": "No data available",
   "@noData": {}
 }

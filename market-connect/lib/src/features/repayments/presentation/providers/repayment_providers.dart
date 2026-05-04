@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/data/models/models.dart';
+import '../../../../core/data/remote/commodity_remote_data_source.dart';
 import '../../../../core/data/repositories/repayment_repository.dart';
 import '../../../../imports/packages_imports.dart';
 import '../../../../utils/utils.dart';
@@ -14,6 +15,12 @@ final repaymentRepositoryProvider = Provider<RepaymentRepository>((ref) {
 final repaymentsProvider = FutureProvider<List<RepaymentModel>>((ref) async {
   final repo = ref.watch(repaymentRepositoryProvider);
   return (await repo.getAll()).getOrThrow;
+});
+
+// Commodities provider
+final commoditiesProvider = FutureProvider<List<CommodityModel>>((ref) async {
+  final result = await CommodityRemoteDataSource().getCommodities();
+  return result.getOrThrow;
 });
 
 // Create repayment notifier

@@ -922,6 +922,12 @@ abstract class AppLocalizations {
   /// **'Erreur de chargement'**
   String get errorLoading;
 
+  /// No description provided for @creditSurplus.
+  ///
+  /// In fr, this message translates to:
+  /// **'Surplus de crédit'**
+  String get creditSurplus;
+
   /// No description provided for @noData.
   ///
   /// In fr, this message translates to:

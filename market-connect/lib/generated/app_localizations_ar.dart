@@ -424,5 +424,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorLoading => 'خطأ في التحميل';
 
   @override
+  String get creditSurplus => 'فائض الائتمان';
+
+  @override
   String get noData => 'لا توجد بيانات متاحة';
 }

@@ -424,5 +424,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorLoading => 'Loading error';
 
   @override
+  String get creditSurplus => 'Credit surplus';
+
+  @override
   String get noData => 'No data available';
 }

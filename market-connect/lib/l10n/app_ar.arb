@@ -92,6 +92,11 @@
   "total": "المجموع",
   "finalizeSale": "إتمام البيع",
   "itemsCount": "{count} عناصر",
+  "@itemsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "onlineSynced": "متصل — متزامن",
   "offlinePending": "غير متصل — في انتظار المزامنة",
 
@@ -143,11 +148,17 @@
   "invalidEmail": "عنوان بريد إلكتروني غير صالح",
   "invalidPhone": "رقم هاتف غير صالح",
   "minLength": "الحد الأدنى {min} أحرف",
+  "@minLength": {
+    "placeholders": {
+      "min": {}
+    }
+  },
   "currency": "FCFA",
   "noFarmers": "لا يوجد مزارعون مسجلون",
   "noSearchResults": "لا توجد نتائج لهذا البحث",
   "noProducts": "لا توجد منتجات متاحة",
   "uncategorized": "غير مصنف",
   "errorLoading": "خطأ في التحميل",
+  "creditSurplus": "فائض الائتمان",
   "noData": "لا توجد بيانات متاحة"
 }

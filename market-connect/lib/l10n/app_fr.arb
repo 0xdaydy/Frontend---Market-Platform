@@ -92,6 +92,11 @@
   "total": "Total",
   "finalizeSale": "Finaliser la vente",
   "itemsCount": "{count} articles",
+  "@itemsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "onlineSynced": "En ligne — synchronisé",
   "offlinePending": "Hors ligne — en attente de sync",
 
@@ -143,12 +148,18 @@
   "invalidEmail": "Adresse email invalide",
   "invalidPhone": "Numéro de téléphone invalide",
   "minLength": "Minimum {min} caractères",
+  "@minLength": {
+    "placeholders": {
+      "min": {}
+    }
+  },
   "currency": "FCFA",
   "noFarmers": "Aucun producteur enregistré",
   "noSearchResults": "Aucun résultat pour cette recherche",
   "noProducts": "Aucun produit disponible",
   "uncategorized": "Non catégorisé",
   "errorLoading": "Erreur de chargement",
+  "creditSurplus": "Surplus de crédit",
   "noData": "Aucune donnée disponible"
 }
 

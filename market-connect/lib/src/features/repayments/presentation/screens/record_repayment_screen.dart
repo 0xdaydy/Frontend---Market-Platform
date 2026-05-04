@@ -20,7 +20,14 @@ class _RecordRepaymentScreenState extends ConsumerState<RecordRepaymentScreen> {
   final _kgController = TextEditingController();
   int? _selectedFarmerId;
   String? _selectedFarmerName;
-  String? _selectedCommodity;
+  int? _selectedCommodityId;
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController.addListener(() => setState(() {}));
+    _kgController.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
@@ -36,7 +43,11 @@ class _RecordRepaymentScreenState extends ConsumerState<RecordRepaymentScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     final farmersAsync = ref.watch(farmersProvider);
+    final commoditiesAsync = ref.watch(commoditiesProvider);
     final createAsync = ref.watch(createRepaymentProvider);
+    final debtsAsync = _selectedFarmerId != null
+        ? ref.watch(farmerDebtsProvider(_selectedFarmerId!))
+        : null;
 
     // Listen for repayment creation state changes
     ref.listen(createRepaymentProvider, (previous, next) {
@@ -123,51 +134,138 @@ class _RecordRepaymentScreenState extends ConsumerState<RecordRepaymentScreen> {
                   ),
                 )
               else
-                Column(
-                  children: [
-                    DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: 'Commodity'),
-                      initialValue: _selectedCommodity,
-                      items: const [
-                        DropdownMenuItem(
-                            value: 'cacao', child: Text('Cacao — 1 200 FCFA/kg')),
-                      ],
-                      onChanged: (value) =>
-                          setState(() => _selectedCommodity = value),
-                    ),
-                    SizedBox(height: 12.h),
-                    TextFormField(
-                      controller: _kgController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
-                        labelText: l10n.kg,
-                        suffixText: 'kg',
-                      ),
-                    ),
-                  ],
-                ),
-              SizedBox(height: 16.h),
-              // Allocation preview (placeholder)
-              Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                commoditiesAsync.when(
+                  data: (commodities) => Column(
                     children: [
-                      Text(l10n.allocationPreview,
-                          style: tt.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600)),
-                      SizedBox(height: 8.h),
-                      Text(
-                        '${l10n.appliedTo}: ${l10n.pending}',
-                        style: tt.bodyMedium?.copyWith(
-                            color: cs.onSurfaceVariant),
+                      DropdownButtonFormField<int>(
+                        decoration:
+                            const InputDecoration(labelText: 'Commodity'),
+                        value: _selectedCommodityId,
+                        items: commodities.map((c) {
+                          return DropdownMenuItem(
+                            value: c.id,
+                            child: Text(
+                                '${c.name} — ${c.rateFcfaPerUnit.toStringAsFixed(0)} FCFA/${c.unit}'),
+                          );
+                        }).toList(),
+                        onChanged: (value) =>
+                            setState(() => _selectedCommodityId = value),
+                      ),
+                      SizedBox(height: 12.h),
+                      TextFormField(
+                        controller: _kgController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: InputDecoration(
+                          labelText: l10n.kg,
+                          suffixText: 'kg',
+                        ),
                       ),
                     ],
                   ),
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                  error: (_, __) => Text(
+                    l10n.errorLoading,
+                    style: tt.bodyMedium?.copyWith(color: cs.error),
+                  ),
                 ),
-              ),
+              SizedBox(height: 16.h),
+              // Allocation preview
+              if (_selectedFarmerId != null && debtsAsync != null)
+                debtsAsync.when(
+                  data: (debts) {
+                    final allocation = _calculateAllocation(debts);
+                    return Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(l10n.allocationPreview,
+                                style: tt.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600)),
+                            SizedBox(height: 8.h),
+                            if (allocation.isEmpty)
+                              Text(
+                                '${l10n.appliedTo}: ${l10n.noDebts}',
+                                style: tt.bodyMedium?.copyWith(
+                                    color: cs.onSurfaceVariant),
+                              )
+                            else
+                              ...allocation.map((item) {
+                                return Padding(
+                                  padding: EdgeInsets.only(bottom: 4.h),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          '${item['reference']}',
+                                          style: tt.bodyMedium,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${(item['applied'] as double).toStringAsFixed(0)} FCFA',
+                                        style: tt.bodyMedium?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: cs.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            if (_getSurplus(debts) > 0) ...[
+                              Divider(height: 16.h),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    l10n.creditSurplus,
+                                    style: tt.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: cs.tertiary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${_getSurplus(debts).toStringAsFixed(0)} FCFA',
+                                    style: tt.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: cs.tertiary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  loading: () => const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+                  error: (_, __) => Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.w),
+                      child: Text(
+                        l10n.errorLoading,
+                        style: tt.bodyMedium?.copyWith(color: cs.error),
+                      ),
+                    ),
+                  ),
+                ),
               SizedBox(height: 24.h),
               SizedBox(
                 width: double.infinity,
@@ -262,14 +360,70 @@ class _RecordRepaymentScreenState extends ConsumerState<RecordRepaymentScreen> {
       data['amount'] = amount;
     } else {
       final kg = double.tryParse(_kgController.text);
-      if (kg == null || kg <= 0 || _selectedCommodity == null) return;
-      data['commodity_name'] = _selectedCommodity;
-      data['commodity_kg'] = kg;
-      data['commodity_rate'] = 1200.0; // Hardcoded for cacao
-      data['amount'] = kg * 1200.0;
+      if (kg == null || kg <= 0 || _selectedCommodityId == null) return;
+      data['commodity_id'] = _selectedCommodityId;
+      data['quantity'] = kg;
     }
 
     ref.read(createRepaymentProvider.notifier).createRepayment(data);
+  }
+
+  double _getRepaymentAmount() {
+    if (!isCommodity) {
+      return double.tryParse(_amountController.text) ?? 0;
+    }
+    final kg = double.tryParse(_kgController.text) ?? 0;
+    final commodities = ref.read(commoditiesProvider).value;
+    final commodity = commodities?.firstWhere(
+      (c) => c.id == _selectedCommodityId,
+      orElse: () => const CommodityModel(id: 0, name: '', unit: '', rateFcfaPerUnit: 0),
+    );
+    return kg * (commodity?.rateFcfaPerUnit ?? 0);
+  }
+
+  List<Map<String, dynamic>> _calculateAllocation(List<DebtModel> debts) {
+    final amount = _getRepaymentAmount();
+    if (amount <= 0) return [];
+
+    var remaining = amount;
+    final allocations = <Map<String, dynamic>>[];
+
+    final openDebts = debts
+        .where((d) => d.status == 'open' || d.status == 'partially_paid')
+        .toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    for (final debt in openDebts) {
+      if (remaining <= 0) break;
+      final toApply = remaining < debt.balance ? remaining : debt.balance;
+      remaining -= toApply;
+      allocations.add({
+        'reference': debt.reference ?? 'DEBT-${debt.id}',
+        'applied': toApply,
+        'balance': debt.balance - toApply,
+      });
+    }
+
+    return allocations;
+  }
+
+  double _getSurplus(List<DebtModel> debts) {
+    final amount = _getRepaymentAmount();
+    if (amount <= 0) return 0;
+
+    var remaining = amount;
+    final openDebts = debts
+        .where((d) => d.status == 'open' || d.status == 'partially_paid')
+        .toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    for (final debt in openDebts) {
+      if (remaining <= 0) break;
+      final toApply = remaining < debt.balance ? remaining : debt.balance;
+      remaining -= toApply;
+    }
+
+    return remaining > 0 ? remaining : 0;
   }
 
   String _getInitials(String name) {
