@@ -17,6 +17,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: market-connect
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,25 +28,32 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version-file: market-connect/pubspec.yaml
           cache: true
 
-      - name: Create production .env
+      - name: Inject environment variables
         run: |
-          echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
-          echo "API_URL=${{ secrets.API_BASE_URL }}" >> .env
-          echo "BASE_API_URL=${{ secrets.API_BASE_URL }}" >> .env
+          if [ -n "${{ secrets.API_BASE_URL }}" ]; then
+            echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
+            echo "API_URL=${{ secrets.API_BASE_URL }}" >> .env
+            echo "BASE_API_URL=${{ secrets.API_BASE_URL }}" >> .env
+          fi
           echo "APP_NAME=\"Market Connect\"" >> .env
+          cat .env
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build web
-        run: flutter build web --release --base-href "/MarketPlatform/"
+        run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
+
+      - name: Fix SPA routing for GitHub Pages
+        run: cp build/web/index.html build/web/404.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: build/web
+          path: market-connect/build/web
 
   deploy:
     needs: build
