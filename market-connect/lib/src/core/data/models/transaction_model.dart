@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive_ce/hive_ce.dart';
+import '../../../extensions/json_extension.dart';
 import 'transaction_item_model.dart';
 
 part 'transaction_model.g.dart';
@@ -59,22 +60,22 @@ class TransactionModel extends Equatable {
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
-      id: json['id'] as int?,
+      id: json.jsonIntOrNull('id'),
       reference: json['reference'] as String?,
-      farmerId: json['farmer_id'] as int,
+      farmerId: json.jsonInt('farmer_id'),
       farmerName: json['farmer']?['name'] as String? ?? '',
       paymentMethod: json['payment_method'] as String,
-      totalAmount: (json['total_amount'] as num).toDouble(),
+      totalAmount: json.jsonDouble('total_amount'),
       status: json['status'] as String? ?? 'completed',
       items: (json['items'] as List<dynamic>?)
           ?.map((e) => TransactionItemModel.fromJson(e as Map<String, dynamic>))
           .toList() ?? [],
-      createdAt: json['created_at'] != null 
+      createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
       isSynced: json['is_synced'] as bool? ?? true,
-      interestAmount: (json['interest_amount'] as num?)?.toDouble(),
-      subtotal: (json['subtotal'] as num?)?.toDouble(),
+      interestAmount: json.jsonDoubleOrNull('interest_amount'),
+      subtotal: json.jsonDoubleOrNull('subtotal'),
     );
   }
 

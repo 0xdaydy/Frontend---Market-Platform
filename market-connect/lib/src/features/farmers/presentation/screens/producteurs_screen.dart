@@ -1,10 +1,10 @@
 import 'package:market_connect/src/imports/core_imports.dart';
 import 'package:market_connect/src/imports/packages_imports.dart';
 
-import '../../presentation/providers/farmer_providers.dart';
 import '../../../../core/design_system/components/farmer_list_tile.dart';
+import '../../presentation/providers/farmer_providers.dart';
 
-class ProducteursScreen extends ConsumerWidget {
+class ProducteursScreen extends HookConsumerWidget {
   const ProducteursScreen({super.key});
 
   @override
@@ -23,7 +23,7 @@ class ProducteursScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(AppRoutes.farmerRegistration),
         icon: const Icon(Icons.add),
-        label: Text(l10n.newFarmer),
+        label: Text(l10n.newFarmer, style: TextStyle(color: cs.surface)),
       ),
       body: SafeArea(
         child: Column(
@@ -94,7 +94,8 @@ class ProducteursScreen extends ConsumerWidget {
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) {
-                  AppLogger.error('ProducteursScreen: Failed to load farmers: $error');
+                  AppLogger.error(
+                      'ProducteursScreen: Failed to load farmers: $error');
                   return Center(
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20.w),

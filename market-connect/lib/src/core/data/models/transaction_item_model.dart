@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive_ce/hive_ce.dart';
+import '../../../extensions/json_extension.dart';
 
 part 'transaction_item_model.g.dart';
 
@@ -34,13 +35,13 @@ class TransactionItemModel extends Equatable {
 
   factory TransactionItemModel.fromJson(Map<String, dynamic> json) {
     return TransactionItemModel(
-      id: json['id'] as int?,
-      productId: json['product_id'] as int,
+      id: json.jsonIntOrNull('id'),
+      productId: json.jsonInt('product_id'),
       productName: json['product_name'] as String? ?? json['product']?['name'] as String? ?? '',
-      quantity: json['quantity'] as int,
-      unitPrice: (json['unit_price'] as num).toDouble(),
-      lineTotal: (json['line_total'] as num?)?.toDouble() ?? 
-          ((json['quantity'] as num) * (json['unit_price'] as num)).toDouble(),
+      quantity: json.jsonInt('quantity'),
+      unitPrice: json.jsonDouble('unit_price'),
+      lineTotal: json.jsonDoubleOrNull('line_total') ??
+          (json.jsonInt('quantity') * json.jsonDouble('unit_price')).toDouble(),
     );
   }
 

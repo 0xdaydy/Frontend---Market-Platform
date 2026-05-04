@@ -27,7 +27,7 @@ class AuthService {
   }) async {
     return runTask(() async {
       final response =
-          await _dio.post<Map<String, dynamic>>('auth/login', data: {
+          await _dio.post<Map<String, dynamic>>('/auth/login', data: {
         'email': email,
         'password': password,
         'device_name': 'mobile',
@@ -63,7 +63,7 @@ class AuthService {
 
   FutureEither<void> logout() async {
     return runTask(() async {
-      await _dio.post<void>('auth/logout');
+      await _dio.post<void>('/auth/logout');
       await AuthInterceptor.clearToken();
       await AuthInterceptor.clearUserData();
       _authStateController.add(null);

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive_ce/hive_ce.dart';
+import '../../../extensions/json_extension.dart';
 
 part 'repayment_model.g.dart';
 
@@ -58,16 +59,16 @@ class RepaymentModel extends Equatable {
 
   factory RepaymentModel.fromJson(Map<String, dynamic> json) {
     return RepaymentModel(
-      id: json['id'] as int,
-      farmerId: json['farmer_id'] as int,
+      id: json.jsonInt('id'),
+      farmerId: json.jsonInt('farmer_id'),
       farmerName: json['farmer']?['name'] as String? ?? '',
-      amount: (json['amount'] as num).toDouble(),
+      amount: json.jsonDouble('amount'),
       paymentMethod: json['payment_method'] as String,
       reference: json['reference'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       commodityName: json['commodity_name'] as String?,
-      commodityRate: (json['commodity_rate'] as num?)?.toDouble(),
-      commodityKg: (json['commodity_kg'] as num?)?.toDouble(),
+      commodityRate: json.jsonDoubleOrNull('commodity_rate'),
+      commodityKg: json.jsonDoubleOrNull('commodity_kg'),
       isSynced: json['is_synced'] as bool? ?? true,
       debtAllocations: (json['debts'] as List<dynamic>?)
           ?.map((e) => {

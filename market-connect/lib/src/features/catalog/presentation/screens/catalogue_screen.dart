@@ -6,7 +6,7 @@ import '../../presentation/providers/catalog_providers.dart';
 import '../../../../core/design_system/components/product_catalog_card.dart';
 import '../../../../core/design_system/components/cart_summary_bar.dart';
 
-class CatalogueScreen extends ConsumerWidget {
+class CatalogueScreen extends HookConsumerWidget {
   const CatalogueScreen({super.key});
 
   @override

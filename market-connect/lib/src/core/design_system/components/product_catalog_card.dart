@@ -61,6 +61,7 @@ class ProductCatalogCard extends StatelessWidget {
                   product.name,
                   style: tt.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
+                    color: cs.surface,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -88,13 +89,15 @@ class ProductCatalogCard extends StatelessWidget {
             FilledButton(
               onPressed: () => onQuantityChanged(1),
               style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 minimumSize: const Size(0, 36),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: Text(
                 AppLocalizations.of(context)!.add,
-                style: tt.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+                style: tt.labelMedium
+                    ?.copyWith(fontWeight: FontWeight.w600, color: cs.surface),
               ),
             )
           else
@@ -116,7 +119,6 @@ class _Stepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final tt = context.theme.textTheme;
 
     return Row(

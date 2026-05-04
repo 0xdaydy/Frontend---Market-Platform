@@ -30,6 +30,14 @@ class FarmerListTile extends StatelessWidget {
       child: Container(
         height: 72,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: cs.outlineVariant,
+              width: 1,
+            ),
+          ),
+        ),
         child: Row(
           children: [
             // Avatar

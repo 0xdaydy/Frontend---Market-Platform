@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive_ce/hive_ce.dart';
+import '../../../extensions/json_extension.dart';
 
 part 'farmer_model.g.dart';
 
@@ -46,16 +47,16 @@ class FarmerModel extends Equatable {
 
   factory FarmerModel.fromJson(Map<String, dynamic> json) {
     return FarmerModel(
-      id: json['id'] as int,
+      id: json.jsonInt('id'),
       cardId: json['card_id'] as String,
       name: json['name'] as String,
       phone: json['phone'] as String?,
       village: json['village'] as String?,
-      creditLimit: (json['credit_limit'] as num?)?.toDouble() ?? 50000.0,
-      creditBalanceFcfa: (json['credit_balance_fcfa'] as num?)?.toDouble() ?? 0.0,
+      creditLimit: json.jsonDoubleOrNull('credit_limit') ?? 50000.0,
+      creditBalanceFcfa: json.jsonDoubleOrNull('credit_balance_fcfa') ?? 0.0,
       createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at'] as String) 
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
           : null,
     );
   }

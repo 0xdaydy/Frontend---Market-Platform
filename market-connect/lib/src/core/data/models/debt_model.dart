@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive_ce/hive_ce.dart';
+import '../../../extensions/json_extension.dart';
 
 part 'debt_model.g.dart';
 
@@ -62,19 +63,19 @@ class DebtModel extends Equatable {
 
   factory DebtModel.fromJson(Map<String, dynamic> json) {
     return DebtModel(
-      id: json['id'] as int,
-      transactionId: json['transaction_id'] as int?,
-      farmerId: json['farmer_id'] as int,
+      id: json.jsonInt('id'),
+      transactionId: json.jsonIntOrNull('transaction_id'),
+      farmerId: json.jsonInt('farmer_id'),
       farmerName: json['farmer']?['name'] as String? ?? '',
-      principal: (json['principal'] as num).toDouble(),
-      interestRate: (json['interest_rate'] as num).toDouble(),
-      totalDue: (json['total_due'] as num).toDouble(),
-      amountRepaid: (json['amount_repaid'] as num).toDouble(),
-      balance: (json['balance'] as num).toDouble(),
+      principal: json.jsonDouble('principal'),
+      interestRate: json.jsonDouble('interest_rate'),
+      totalDue: json.jsonDouble('total_due'),
+      amountRepaid: json.jsonDouble('amount_repaid'),
+      balance: json.jsonDouble('balance'),
       status: json['status'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at'] as String) 
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
           : null,
       reference: json['reference'] as String?,
     );

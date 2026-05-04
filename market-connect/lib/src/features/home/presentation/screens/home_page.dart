@@ -80,11 +80,16 @@ class HomePage extends HookConsumerWidget {
                       height: 64.h,
                       child: FilledButton.icon(
                         onPressed: () => context.push(AppRoutes.catalogue),
+                        style: FilledButton.styleFrom(
+                          iconSize: 20.sp,
+                        ),
                         icon: const Icon(Icons.shopping_bag_outlined),
                         label: Text(
                           l10n.newSale,
                           style: tt.labelLarge?.copyWith(
                             fontWeight: FontWeight.w600,
+                            fontSize: 14.sp,
+                            color: cs.surface,
                           ),
                         ),
                       ),
@@ -94,12 +99,18 @@ class HomePage extends HookConsumerWidget {
                       width: double.infinity,
                       height: 64.h,
                       child: OutlinedButton.icon(
-                        onPressed: () => context.push(AppRoutes.recordRepayment),
+                        onPressed: () =>
+                            context.push(AppRoutes.recordRepayment),
                         icon: const Icon(Icons.receipt_long_outlined),
+                        style: OutlinedButton.styleFrom(
+                          iconSize: 20.sp,
+                        ),
                         label: Text(
                           l10n.recordRepayment,
                           style: tt.labelLarge?.copyWith(
                             fontWeight: FontWeight.w600,
+                            fontSize: 14.sp,
+                            color: cs.primary,
                           ),
                         ),
                       ),
@@ -127,7 +138,8 @@ class HomePage extends HookConsumerWidget {
                             child: Column(
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       l10n.salesToday,
@@ -148,7 +160,8 @@ class HomePage extends HookConsumerWidget {
                                 ),
                                 Divider(height: 16.h),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       l10n.totalFcfa,
