@@ -5,6 +5,7 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+# Required permissions for GitHub Pages deployment via GitHub Actions
 permissions:
   contents: read
   pages: write
@@ -21,7 +22,7 @@ jobs:
       run:
         working-directory: market-connect
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Flutter
@@ -31,12 +32,20 @@ jobs:
           flutter-version-file: market-connect/pubspec.yaml
           cache: true
 
+      # Automatically detects the correct base path for GitHub Pages
+      # (e.g., /repo-name/ for project sites, / for custom domains)
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
       - name: Inject environment variables
         run: |
           if [ -n "${{ secrets.API_BASE_URL }}" ]; then
             echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
             echo "API_URL=${{ secrets.API_BASE_URL }}" >> .env
             echo "BASE_API_URL=${{ secrets.API_BASE_URL }}" >> .env
+          else
+            touch .env
           fi
           echo "APP_NAME=\"Market Connect\"" >> .env
           cat .env
@@ -45,10 +54,16 @@ jobs:
         run: flutter pub get
 
       - name: Build web
-        run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
+        run: flutter build web --release --base-href "${{ steps.pages.outputs.base_path }}"
 
+      # Copies index.html to 404.html so client-side routing works on refresh
       - name: Fix SPA routing for GitHub Pages
         run: cp build/web/index.html build/web/404.html
+
+      - name: Verify build output
+        run: |
+          ls -la build/web/
+          test -f build/web/index.html || (echo "Build failed: index.html missing" && exit 1)
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
